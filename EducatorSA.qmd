@@ -4,24 +4,45 @@ author: "Siwen Yang"
 format: typst
 editor: visual
 ---
-
-## Quarto
-
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
-
-## Running Code
-
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
-
 ```{r}
-1 + 1
+library(readxl)
+library(tidyverse)
+library(naniar)
 ```
 
-You can add options to executable code like this
-
+New platform - WAVE
 ```{r}
-#| echo: false
-2 * 2
+wave_2026 <- read_excel("D:/Desktop/EducatorSA/WAVE_Educators SA_members_8_5_2026.xlsx")
+wave_2026$`Start Date` <- as.Date(wave_2026$`Start Date`, origin = "1899-12-30")
 ```
 
-The `echo: false` option disables the printing of code (only output is displayed).
+```{r}
+wave_2026 <- wave_2026 %>%
+  select(-c("First Name", "Last Name", "Position", "Email", "Mobile", "Address", "Suburb", "Billing Company", "Billing First name", "Billing Last name", "Billing Email", "ABN", "Package", "Duration", "Addon", "Note", "State", "Postcode", "Payment Method", "President Name", "President Email", "President Phone Number", "Vice President Name", "Vice President Email", "Vice President Phone Number", "Secretary Name", "Secretary Email", "Secretary Phone Number", "Treasurer Name", "Treasurer Email", "Treasurer Phone Number", "EdSA Representative Name", "EdSA Representative Email", "EdSA Representative Phone Number", "Website URL:", "Public facing email address:", "Phone number for public distribution (if available):", "Facebook:", "Instagram:", "Other - Please specify", "If yes, please specify:", "Co President Name", "Co President Email", "Co President Phone Number", "If yes, please provide details:", "LinkedIn:", "Twitter:", "Expiry Date"))
+```
+
+
+Old platform - Gateway
+```{r}
+gateway <- read_excel("D:/Desktop/EducatorSA/Gateway_exports_association_users_export.xlsx")
+gateway <- gateway %>%
+  filter(!(`Contact Name` %in% "Please")) %>%
+  filter(!(Membership %in% "Admin")) %>%
+  select(-c("...10", "Membership Is Subscription", "Surname", "Is Voided", "Membership Paid Date")) %>%
+  select(-c("Association", "Email", "President Phone Number", "Co President Name", "Co President Email", "Co President Phone Number", "Vice President Name", "Vice President Email", "Vice President Phone Number", "Secretary Name", "Secretary Email", "Secretary Phone Number", "Treasurer Name", "Treasurer Email", "Treasurer Phone Number", "EdSA Representative Name", "EdSA Representative Email", "EdSA Representative Phone Number")) %>%
+  select(-c("President Name", "President Email", ))
+```
+
+```{r}
+glimpse(gateway)
+```
+
+```{r}
+gateway$`Signup Time` <- as.Date(gateway$`Signup Time`, format = "%Y-%m-%d")
+```
+
+```{r}
+check_missing_gateway <- miss_var_summary(gateway)
+check_missing_wave <- miss_var_summary(wave_2026)
+```
+
