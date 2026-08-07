@@ -4,37 +4,108 @@ author: "Siwen Yang"
 format: typst
 editor: visual
 ---
+
 ```{r}
 library(readxl)
 library(tidyverse)
 library(naniar)
+library(visdat)
 ```
 
-New platform - WAVE
-```{r}
-wave_2026 <- read_excel("D:/Desktop/EducatorSA/WAVE_Educators SA_members_8_5_2026.xlsx")
-wave_2026$`Start Date` <- as.Date(wave_2026$`Start Date`, origin = "1899-12-30")
-```
+###New platform - WAVE
 
 ```{r}
-wave_2026 <- wave_2026 %>%
-  select(-c("First Name", "Last Name", "Position", "Email", "Mobile", "Address", "Suburb", "Billing Company", "Billing First name", "Billing Last name", "Billing Email", "ABN", "Package", "Duration", "Addon", "Note", "State", "Postcode", "Payment Method", "President Name", "President Email", "President Phone Number", "Vice President Name", "Vice President Email", "Vice President Phone Number", "Secretary Name", "Secretary Email", "Secretary Phone Number", "Treasurer Name", "Treasurer Email", "Treasurer Phone Number", "EdSA Representative Name", "EdSA Representative Email", "EdSA Representative Phone Number", "Website URL:", "Public facing email address:", "Phone number for public distribution (if available):", "Facebook:", "Instagram:", "Other - Please specify", "If yes, please specify:", "Co President Name", "Co President Email", "Co President Phone Number", "If yes, please provide details:", "LinkedIn:", "Twitter:", "Expiry Date"))
+wave <- read_excel("D:/Desktop/EducatorSA/WAVE_Educators SA_members_8_5_2026.xlsx")
 ```
 
+```{r}
+wave$`Start Date` <- as.Date(wave$`Start Date`, origin = "1899-12-30")
+wave <- wave %>%
+  filter(!is.na(Company))%>%
+  filter(Company != "EDSA")
 
-Old platform - Gateway
+```
+
+```{r}
+wave <- wave %>%
+  select(-c("First Name", "Last Name", "Position", "Email", "Mobile", "Address", "Suburb", "Billing Company", "Billing First name", "Billing Last name", "Billing Email", "ABN", "Package", "Duration", "Addon", "Note", "State", "Postcode", "Payment Method", "President Name", "President Email", "President Phone Number", "Vice President Name", "Vice President Email", "Vice President Phone Number", "Secretary Name", "Secretary Email", "Secretary Phone Number", "Treasurer Name", "Treasurer Email", "Treasurer Phone Number", "EdSA Representative Name", "EdSA Representative Email", "EdSA Representative Phone Number", "Website URL:", "Public facing email address:", "Phone number for public distribution (if available):", "Facebook:", "Instagram:", "Other - Please specify", "Co President Name", "Co President Email", "Co President Phone Number","LinkedIn:", "Twitter:", "Expiry Date","The Educators SA Association Newsletter is now our main method of communicating information to members. Are there any additional committee members who would like to be added to the distribution list? Please provide name and email addresses:")) %>%
+  select(-c(ID, Type, "Tags", "Xero ID")) %>%
+  select(-c("What term is your current President in?", "When is your AGM due to be held?", "Do you offer any discounted memberships to Early Career Educators?", "Does your Association have an Annual Conference?", "If so, which month?", "Do your Association ever host National Conferences?", "What are the dates of this Event/Conference?", "What is your main Event/Conference for the year?", "What are your membership renewal terms?", "If so, what year/ month is the next one scheduled to be in SA?" , "If you are aware, what would be the % of your current members in each age group? Age group 18-25 in %", "Approximately, what is the % of your current members in the age group 26-35?", "Approximately, what is the % of your current members in the age group 36-45?", "Approximately, what is the % of your current members in the age group 46-55?", "Approximately, what is the % of your current members in the age group 55+?", "If you offer any services targeted specifically at Pre-Service Educators, please specify:", "If you offer any services targeted specifically at Early Career Educators, please specify:"))
+```
+
+```{r}
+wave <- wave %>%
+  rename(number_members_2025 = `How many Members did your Association have in 2025?`, 
+         acronym = `Acronym Association`, 
+         # if_discount_new = `Do you offer a discounted membership to \"Early Careers\" or \"Pre-Service\"?`, 
+         number_members_2024 = `How many Members did your Association have in 2024?`, 
+         number_committee_members = `How many Committee Members do you have?`, 
+         asso_name = `Company`, 
+         memb_number = `Membership Number`
+         )
+```
+
+```{r}
+wave[wave$number_members_2025 %in% "216 SA individual, student and institution", "number_members_2025"] <- "216"
+wave[wave$number_members_2025 %in% "290 - not including school associate members (eg teachers from member schools)", "number_members_2025"] <- "290"
+wave[wave$number_members_2025 %in% "Cant log in to check", "number_members_2025"] <- NA
+wave[wave$number_members_2025 %in% "150 approx. we don't have a good database for 2025", "number_members_2025"] <- "150"
+wave[wave$number_members_2025 %in% "43 individual, 14 schools (5 teachers per school membership) and 1 Institutional membership- Adelaide University", "number_members_2025"] <- "114"
+wave[wave$number_members_2025 %in% "NA", "number_members_2025"] <- NA
+
+wave <- wave %>%
+  mutate(number_members_2025 = as.numeric(number_members_2025))
+```
+
+```{r}
+wave[wave$number_members_2024 %in% "75 state members (national association is greater)", "number_members_2024"] <- "75"
+wave[wave$number_members_2024 %in% "150ish", "number_members_2024"] <- "150"
+wave[wave$number_members_2024 %in% "43 metro schools, 16 country schools, 17 individuals, 1 student", "number_members_2024"] <- "77"
+wave[wave$number_members_2024 %in% "approx. 80", "number_members_2024"] <- "80"
+wave[wave$number_members_2024 %in% "150ish", "number_members_2024"] <- "150"
+wave[wave$number_members_2024 %in% "200 this includes organisational groups of members", "number_members_2024"] <- "200"
+wave[wave$number_members_2024 %in% "170 odd", "number_members_2024"] <- "170"
+wave[wave$number_members_2024 %in% "65 services", "number_members_2024"] <- "65"
+wave[wave$number_members_2024 %in% "Approx 200", "number_members_2024"] <- "200"
+wave[wave$number_members_2024 %in% "not sure", "number_members_2024"] <- NA
+wave[wave$number_members_2024 %in% "Around 340 SA members", "number_members_2024"] <- "340"
+wave[wave$number_members_2024 %in% "160 on average", "number_members_2024"] <- "160"
+wave[wave$number_members_2024 %in% "check with Gateway data", "number_members_2024"] <- "50"
+
+wave <- wave %>%
+  mutate(number_members_2024 = as.numeric(number_members_2024))
+```
+
+```{r}
+wave[wave$number_committee_members %in% "9 committee members, around 30 members", "number_committee_members"] <- "9"
+wave[wave$number_committee_members %in% "Eleven", "number_committee_members"] <- "11"
+wave[wave$number_committee_members %in% "Currently 6 until AGM", "number_committee_members"] <- "6"
+wave[wave$number_committee_members %in% "6 general committee members", "number_committee_members"] <- "6"
+
+wave <- wave %>%
+  mutate(number_committee_members = as.numeric(number_committee_members))
+```
+
+```{r}
+check_missing_wave <- miss_var_summary(wave)
+```
+
+###Old platform - Gateway
+
 ```{r}
 gateway <- read_excel("D:/Desktop/EducatorSA/Gateway_exports_association_users_export.xlsx")
+```
+
+```{r}
 gateway <- gateway %>%
   filter(!(`Contact Name` %in% "Please")) %>%
   filter(!(Membership %in% "Admin")) %>%
   select(-c("...10", "Membership Is Subscription", "Surname", "Is Voided", "Membership Paid Date")) %>%
-  select(-c("Association", "Email", "President Phone Number", "Co President Name", "Co President Email", "Co President Phone Number", "Vice President Name", "Vice President Email", "Vice President Phone Number", "Secretary Name", "Secretary Email", "Secretary Phone Number", "Treasurer Name", "Treasurer Email", "Treasurer Phone Number", "EdSA Representative Name", "EdSA Representative Email", "EdSA Representative Phone Number")) %>%
-  select(-c("President Name", "President Email", ))
-```
-
-```{r}
-glimpse(gateway)
+  select(-c("Association", "Email", "President Phone Number", "Co President Name", "Co President Email", "Co President Phone Number", "Vice President Name", "Vice President Email", "Vice President Phone Number", "Secretary Name", "Secretary Email", "Secretary Phone Number", "Treasurer Name", "Treasurer Email", "Treasurer Phone Number", "EdSA Representative Name", "EdSA Representative Email", "EdSA Representative Phone Number", "President Name", "President Email")) %>%
+  select(-c(Membership, "Contact Name", "What is your main Event/Conference for the year?", "What are the dates of this Event/Conference?", "When is your AGM due to be held?", "What term is your current President in?", "What are your membership renewal terms?", "Other - Please specify", "If yes, please specify", "If you are aware, what would be the % of your current members in each age group? Age group 18-25 in %", "Approximately, what is the % of your current members in the age group 26-35?", "Approximately, what is the % of your current members in the age group 36-45?", "Approximately, what is the % of your current members in the age group 46-55?", "Approximately, what is the % of your current members in the age group 55+?", "Would you like to be contacted regards the EdSA Gateway Membership Management system?")) %>%
+  rename(acronym = `Association Acronym`, 
+         asso_name = `Association Name`, 
+         memb_number = `Membership Number`)
 ```
 
 ```{r}
@@ -42,7 +113,16 @@ gateway$`Signup Time` <- as.Date(gateway$`Signup Time`, format = "%Y-%m-%d")
 ```
 
 ```{r}
-check_missing_gateway <- miss_var_summary(gateway)
-check_missing_wave <- miss_var_summary(wave_2026)
+glimpse(gateway)
 ```
 
+```{r}
+check_missing_gateway <- miss_var_summary(gateway)
+```
+
+```{r}
+new_member <- anti_join(wave, gateway, by = "asso_name")
+leave_member <- anti_join(gateway, wave, by = "asso_name")
+```
+
+##Advice 建议将调查客户详细地址改成询问active的地区（州/城市） "Do you offer any discounted memberships to Early Career Educators?"和 "Do you offer a discounted membership to "Early Careers" or "Pre-Service"?"问题重复 "What are your Member categories?"问题表述不清晰，比如有些人回答unsure what categories you mean "What locations are you using to run your events?"问题太笼统，有些写的类似school的地点，而有些写的是城市
