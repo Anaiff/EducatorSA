@@ -10,6 +10,7 @@ library(readxl)
 library(tidyverse)
 library(naniar)
 library(visdat)
+library(ggplot2)
 ```
 
 ###New platform - WAVE
@@ -28,7 +29,7 @@ wave <- wave %>%
 
 ```{r}
 wave <- wave %>%
-  select(-c("First Name", "Last Name", "Position", "Email", "Mobile", "Address", "Suburb", "Billing Company", "Billing First name", "Billing Last name", "Billing Email", "ABN", "Package", "Duration", "Addon", "Note", "State", "Postcode", "Payment Method", "President Name", "President Email", "President Phone Number", "Vice President Name", "Vice President Email", "Vice President Phone Number", "Secretary Name", "Secretary Email", "Secretary Phone Number", "Treasurer Name", "Treasurer Email", "Treasurer Phone Number", "EdSA Representative Name", "EdSA Representative Email", "EdSA Representative Phone Number", "Website URL:", "Public facing email address:", "Phone number for public distribution (if available):", "Facebook:", "Instagram:", "Other - Please specify", "Co President Name", "Co President Email", "Co President Phone Number","LinkedIn:", "Twitter:", "Expiry Date","The Educators SA Association Newsletter is now our main method of communicating information to members. Are there any additional committee members who would like to be added to the distribution list? Please provide name and email addresses:")) %>%
+  select(-c("First Name", "Last Name", "Position", "Email", "Mobile", "Address", "Suburb", "Billing Company", "Billing First name", "Billing Last name", "Billing Email", "ABN", "Package", "Duration", "Addon", "Note", "State", "Postcode", "Payment Method", "President Name", "President Email", "President Phone Number", "Vice President Name", "Vice President Email", "Vice President Phone Number", "Secretary Name", "Secretary Email", "Secretary Phone Number", "Treasurer Name", "Treasurer Email", "Treasurer Phone Number", "EdSA Representative Name", "EdSA Representative Email", "EdSA Representative Phone Number", "Website URL:", "Public facing email address:", "Phone number for public distribution (if available):", "Facebook:", "Instagram:", "Other - Please specify", "Co President Name", "Co President Email", "Co President Phone Number","LinkedIn:", "Twitter:", "Start Date", "Expiry Date","The Educators SA Association Newsletter is now our main method of communicating information to members. Are there any additional committee members who would like to be added to the distribution list? Please provide name and email addresses:")) %>%
   select(-c(ID, Type, "Tags", "Xero ID")) %>%
   select(-c("What term is your current President in?", "When is your AGM due to be held?", "Do you offer any discounted memberships to Early Career Educators?", "Does your Association have an Annual Conference?", "If so, which month?", "Do your Association ever host National Conferences?", "What are the dates of this Event/Conference?", "What is your main Event/Conference for the year?", "What are your membership renewal terms?", "If so, what year/ month is the next one scheduled to be in SA?" , "If you are aware, what would be the % of your current members in each age group? Age group 18-25 in %", "Approximately, what is the % of your current members in the age group 26-35?", "Approximately, what is the % of your current members in the age group 36-45?", "Approximately, what is the % of your current members in the age group 46-55?", "Approximately, what is the % of your current members in the age group 55+?", "If you offer any services targeted specifically at Pre-Service Educators, please specify:", "If you offer any services targeted specifically at Early Career Educators, please specify:"))
 ```
@@ -73,7 +74,9 @@ wave[wave$number_members_2024 %in% "160 on average", "number_members_2024"] <- "
 wave[wave$number_members_2024 %in% "check with Gateway data", "number_members_2024"] <- "50"
 
 wave <- wave %>%
-  mutate(number_members_2024 = as.numeric(number_members_2024))
+  mutate(number_members_2024 = as.numeric(number_members_2024))%>%
+wave$`How many current financial members do you have?` <- factor(wave$`How many current financial members do you have?`, levels = c("0-50", "51-100", "101-150", "151-200", "200+"))
+wave$`How many 'Early Career' or 'Pre Service' members do you have?` <- factor(wave$`How many 'Early Career' or 'Pre Service' members do you have?`, levels = c("0-10", "11-30", "31-50", "51-100", "unsure"))
 ```
 
 ```{r}
@@ -83,11 +86,30 @@ wave[wave$number_committee_members %in% "Currently 6 until AGM", "number_committ
 wave[wave$number_committee_members %in% "6 general committee members", "number_committee_members"] <- "6"
 
 wave <- wave %>%
-  mutate(number_committee_members = as.numeric(number_committee_members))
+  mutate(number_committee_members = as.numeric(number_committee_members))%>%
+  mutate(serial_num = row_number())
 ```
 
 ```{r}
+glimpse(wave)
 check_missing_wave <- miss_var_summary(wave)
+```
+
+```{r}
+# 用中位数填补缺失值来避免极端值影响结果
+# 注意，由于在2024有25%的members没有填写人数，在2025有17.2%的人没有填写，有一年数据缺失的用另一年数据填补，两年都缺失的，用中位数填补，尽可能使数据准确
+
+wave_filled <- wave %>%
+  mutate(number_members_2025 = ifelse(is.na(number_members_2025), number_members_2024, number_members_2025)) %>%
+  mutate(number_members_2024 = ifelse(is.na(number_members_2024), number_members_2025, number_members_2024)) %>%
+  mutate(number_members_2024 = ifelse(is.na(number_members_2024), 79, number_members_2024), 
+         number_members_2025 = ifelse(is.na(number_members_2025), 85, number_members_2025)) 
+
+```
+
+```{r}
+wave <- wave %>%
+  mutate(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?` = ifelse(is.na(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?`), "No", `Do you offer a discounted membership to "Early Careers" or "Pre-Service"?`))
 ```
 
 ###Old platform - Gateway
@@ -125,4 +147,68 @@ new_member <- anti_join(wave, gateway, by = "asso_name")
 leave_member <- anti_join(gateway, wave, by = "asso_name")
 ```
 
-##Advice 建议将调查客户详细地址改成询问active的地区（州/城市） "Do you offer any discounted memberships to Early Career Educators?"和 "Do you offer a discounted membership to "Early Careers" or "Pre-Service"?"问题重复 "What are your Member categories?"问题表述不清晰，比如有些人回答unsure what categories you mean "What locations are you using to run your events?"问题太笼统，有些写的类似school的地点，而有些写的是城市
+##会员规模
+###付费会员
+
+```{r}
+wave |>
+  filter(!is.na(`How many current financial members do you have?`)) |>
+  ggplot(aes(x = `How many current financial members do you have?`)) +
+  geom_bar()
+
+```
+通过bar chart可以发现大部分的associations的付费会员人数在100人以内而大约有十家association的付费会员超过200。According to the data, most of the associations 超过半数会员都是付费会员。Among the data set有两个异常值，which 2025年会员人数在100人以下却选择了“200+”的付费会员人数，这可能是错误的数据。
+
+###24-25年变化
+```{r}
+mean(wave$number_members_2024, na.rm = TRUE)
+median(wave$number_members_2024, na.rm = TRUE)
+```
+
+```{r}
+mean(wave$number_members_2025, na.rm = TRUE)
+median(wave$number_members_2025, na.rm = TRUE)
+```
+均值增加了两倍多，while中位数从79上升到了85.说明各个association的会员人数总体上都有增长，并且原本比较大的association扩张速度非常快，带动了总体人数的激增。通过查看detail数据，可以看到members员工最多的association是Primary English Teaching Association
+
+```{r}
+wave_filled |>
+  ggplot(aes(x = number_members_2024, y = number_members_2025)) + 
+  geom_point() + 
+  geom_text(aes(label = acronym), hjust = -0.2, size = 3)
+```
+
+Primary English Teaching Association Australia（PETAA）which在2025年有5200名会员，断层领先，占总会员人数估计值的约28%。然而accoring to他在2024年登记的数量仅有200，实现了非常大的飞跃，这个情况可能还需要后续了解和核实。而Australian Council for Educational Leaders(ACEL)有4000名会员约占整体的21%。需要注意2024年ACEL的数据为缺失值而非实际值。South Australian Science Teachers Association(SASTA)有超过1700名会员占据第三位，该组织相较于2024年会员数量略有增长，总体保持稳定。
+```{r}
+sum(wave_filled$number_members_2024)
+sum(wave_filled$number_members_2025)
+```
+
+###'Early Career' or 'Pre Service' members
+```{r}
+wave|>
+  filter(!is.na(`How many 'Early Career' or 'Pre Service' members do you have?`))|>
+  ggplot(aes(x = `How many 'Early Career' or 'Pre Service' members do you have?`)) +
+  geom_bar()
+```
+According to the bar chart, association中'Early Career' or 'Pre Service'为0-10的占比比较多。这说明大部分组织'Early Career' or 'Pre Service'的会员占比很少，有多于50的'Early Career' or 'Pre Service'的组织人数也比较多，比如South Australian Science Teachers Association
+
+```{r}
+wave |>
+  mutate(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?` = factor(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?`, levels = c("Yes", "No"))) %>%
+  ggplot(aes(x = `Do you offer a discounted membership to "Early Careers" or "Pre-Service"?`)) + 
+  geom_bar()
+```
+通过图表可以看出，71.9%组织为'Early Career' or 'Pre Service'提供折扣。
+
+```{r}
+# LLM
+LLM_wave <- wave %>%
+  select(-c())
+```
+
+##组织福利
+##活动举办
+#Advice 
+建议将调查客户详细地址改成询问active的地区（州/城市） "Do you offer any discounted memberships to Early Career Educators?"和 "Do you offer a discounted membership to "Early Careers" or "Pre-Service"?"问题重复 "What are your Member categories?"问题表述不清晰，比如有些人回答unsure what categories you mean "What locations are you using to run your events?"问题太笼统，有些写的类似school的地点，而有些写的是城市
+2.是否给学前教育提供帮助，问题重复了
