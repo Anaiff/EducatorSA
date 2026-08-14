@@ -85,25 +85,12 @@ wave[wave$number_committee_members %in% "Currently 6 until AGM", "number_committ
 wave[wave$number_committee_members %in% "6 general committee members", "number_committee_members"] <- "6"
 
 wave <- wave %>%
-  mutate(number_committee_members = as.numeric(number_committee_members))%>%
-  mutate(serial_num = row_number())
+  mutate(number_committee_members = as.numeric(number_committee_members))
 ```
 
 ```{r}
 glimpse(wave)
 check_missing_wave <- miss_var_summary(wave)
-```
-
-```{r}
-# 用中位数填补缺失值来避免极端值影响结果
-# 注意，由于在2024有25%的members没有填写人数，在2025有17.2%的人没有填写，有一年数据缺失的用另一年数据填补，两年都缺失的，用中位数填补，尽可能使数据准确
-
-wave_filled <- wave %>%
-  mutate(number_members_2025 = ifelse(is.na(number_members_2025), number_members_2024, number_members_2025)) %>%
-  mutate(number_members_2024 = ifelse(is.na(number_members_2024), number_members_2025, number_members_2024)) %>%
-  mutate(number_members_2024 = ifelse(is.na(number_members_2024), 79, number_members_2024), 
-         number_members_2025 = ifelse(is.na(number_members_2025), 85, number_members_2025)) 
-
 ```
 
 ```{r}
@@ -131,8 +118,22 @@ wave$`What are your membership predictions for 2025 and why?`[wave$asso_name == 
 wave$`How many 'Early Career' or 'Pre Service' members do you have?`[wave$asso_name == "Home Economics Institute of Australia Inc"] <- "11-30"
 wave$`How many current financial members do you have?`[wave$asso_name == "Home Economics Institute of Australia Inc"] <- "200+"
 
+# 注意这里Australian Council for Health, Physical Education & Recreation (SA Branch)没有任何信息，被删除。
 wave <- wave %>%
-  filter( asso_name != "Home Economics Institute of Australia (SA)")
+  filter( asso_name != "Home Economics Institute of Australia (SA)") %>%
+  filter( asso_name != "Australian Council for Health, Physical Education & Recreation (SA Branch)")
+```
+
+```{r}
+# 用中位数填补缺失值来避免极端值影响结果
+# 注意，由于在2024有25%的members没有填写人数，在2025有17.2%的人没有填写，有一年数据缺失的用另一年数据填补，两年都缺失的，用中位数填补，尽可能使数据准确
+
+wave_filled <- wave %>%
+  mutate(number_members_2025 = ifelse(is.na(number_members_2025), number_members_2024, number_members_2025)) %>%
+  mutate(number_members_2024 = ifelse(is.na(number_members_2024), number_members_2025, number_members_2024)) %>%
+  mutate(number_members_2024 = ifelse(is.na(number_members_2024), 79, number_members_2024), 
+         number_members_2025 = ifelse(is.na(number_members_2025), 85, number_members_2025)) 
+
 ```
 
 ###Old platform - Gateway
@@ -170,7 +171,7 @@ new_member <- anti_join(wave, gateway, by = "asso_name")
 leave_member <- anti_join(gateway, wave, by = "asso_name")
 ```
 
-##会员规模 
+##会员规模
 
 ###付费会员
 
@@ -215,8 +216,16 @@ wave_filled |>
 sum(wave_filled$number_members_2024)
 sum(wave_filled$number_members_2025)
 ```
+### 人员增长趋势
 
-\###'Early Career' or 'Pre Service' members
+```{r}
+wave |>
+  ggplot(aes(x = `Was that an increase, decrease or stable number?`)) + 
+  geom_bar()
+```
+大部分associations的人数都比较稳定。有12家组织人员正在增长，while 10家正在减少。值得注意的是，Australian Council for Educational Leaders作为一家在2025年有4000名成员的大公司，他们也是面对成员减少问题的其中之一。
+
+###'Early Career' vs 'Pre Service'
 
 ```{r}
 wave|>
@@ -234,12 +243,82 @@ wave |>
   geom_bar()
 ```
 
-通过图表可以看出，71.9%组织为'Early Career' or 'Pre Service'提供折扣。
+通过图表可以看出，大部分，which is 71.9%组织为'Early Career' or 'Pre Service'提供折扣。
 
 ```{r}
 # LLM
-LLM_wave <- wave %>%
-  select(-c())
+
+LLM_wave_pre <- wave %>%
+  mutate(serial_num = row_number()) %>%
+  select("serial_num", "Do you offer any services targeted specifically at Pre-Service educators?", "Do you offer any services targeted specifically at Early Career Educators?")
+
+write.csv(LLM_wave_pre, "LLM_wave_pre.csv")
 ```
 
-##组织福利 ##活动举办 #Advice 建议将调查客户详细地址改成询问active的地区（州/城市） "Do you offer any discounted memberships to Early Career Educators?"和 "Do you offer a discounted membership to "Early Careers" or "Pre-Service"?"问题重复 "What are your Member categories?"问题表述不清晰，比如有些人回答unsure what categories you mean "What locations are you using to run your events?"问题太笼统，有些写的类似school的地点，而有些写的是城市 2.是否给学前教育提供帮助，问题重复了
+```{r}
+LLM_wave_pre_classified <- read_csv("LLM_wave_pre_classified.csv") %>%
+  select(-"Unnamed: 0")
+```
+```{r}
+# 不用了，或许画饼图会更好？
+LLM_wave_pre_classified |>
+  separate_rows(`Pre-Service Educator Service Categories`, sep = ";") %>%
+  filter(`Pre-Service Educator Service Categories` != "No service reported") %>%
+  count(`Pre-Service Educator Service Categories`, sort = TRUE) %>%
+  ggplot(aes(x = `Pre-Service Educator Service Categories`, y = n)) + 
+  geom_col() + 
+  labs(title = "Pre-Service Educator Service Categories", x = "Service Categories", y = "Numbers") + 
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+```
+
+```{r}
+# 不用了
+LLM_wave_pre_classified |>
+  separate_rows(`Early Career Educator Service Categories`, sep = ";") %>%
+  filter(`Early Career Educator Service Categories` != "No service reported") %>%
+  count(`Early Career Educator Service Categories`, sort = TRUE) %>%
+  ggplot(aes(x = `Early Career Educator Service Categories`, y = n)) + 
+  geom_col() + 
+  labs(title = "Early Career Educator Service Categories", x = "Service Categories", y = "Numbers") + 
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+```
+
+```{r}
+pre_data <- LLM_wave_pre_classified |>
+  separate_rows(`Pre-Service Educator Service Categories`, sep = ";") %>%
+  filter(`Pre-Service Educator Service Categories` != "No service reported") %>%
+  select(Category = `Pre-Service Educator Service Categories`) %>%
+  mutate(Group = "Pre-Service")
+
+early_data <- LLM_wave_pre_classified |>
+  separate_rows(`Early Career Educator Service Categories`, sep = ";") %>%
+  filter(`Early Career Educator Service Categories` != "No service reported") %>%
+  select(Category = `Early Career Educator Service Categories`) %>%
+  mutate(Group = "Early Career")
+
+bind_rows(pre_data, early_data) %>%
+  count(Group, Category, sort = TRUE) %>%
+  group_by(Group) %>%
+  mutate(Category = fct_relevel(Category, "Other/Unclear", after = Inf)) %>%
+  ggplot(aes(x = Category, y = n, fill = Group)) + 
+  geom_col(position = "dodge") + 
+  labs(title = "Comparison of Service Offerings Between Pre-Service and Early Career Educators", x = "Service Categories", y = "Count") + 
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+```
+可以观察到两个群体有一些共同点。Both两个群体，有超过十家公司提到给他们提供了professional development和training相关的服务。这说明协会如果针对这两个群体提供服务，比较倾向于通过培训、职业发展和专业能力提升来支持他们。
+
+Events & Conferences 也比较稳定，是经常被提到的新手福利之一。会议和活动可能是协会连接学生教师/职初教师的重要方式。
+
+值得注意的是Membership & Fee Support 在 Pre-Service Educators 中明显更多。这可能说明协会更倾向于通过优惠会员费、会员支持等方式吸引或支持准教师进入专业协会。对于 Pre-Service Educators 来说，降低会员成本可能是协会提供支持的重要方式。
+
+相反，Networking & Community Support 在 Early Career Educators 中更突出。这可能反映出职初教师进入职业阶段后，也许对建立职业网络、同行交流和专业社区的需求更加明显。
+
+部分组织提到了Mentoring ，但是比例较低。说明 mentoring 目前并不是协会最普遍提供的服务。此外被提到的帮助服务还有Career and Employment Support, Classroom&Practical Support等。值得提到的是。在“Ohter/Unclear”中包含的大多是填写了Yes但没写具体内容的组织。
+```{r}
+wave |>
+  filter(`How many 'Early Career' or 'Pre Service' members do you have?` == "51-100")
+```
+
+##活动举办 
+
+#Advice 建议将调查客户详细地址改成询问active的地区（州/城市） "Do you offer any discounted memberships to Early Career Educators?"和 "Do you offer a discounted membership to "Early Careers" or "Pre-Service"?"问题重复 "What are your Member categories?"问题表述不清晰，比如有些人回答unsure what categories you mean "What locations are you using to run your events?"问题太笼统，有些写的类似school的地点，而有些写的是城市 2.是否给学前教育提供帮助，问题重复了
