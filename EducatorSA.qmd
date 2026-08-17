@@ -216,6 +216,7 @@ wave_filled |>
 sum(wave_filled$number_members_2024)
 sum(wave_filled$number_members_2025)
 ```
+
 ### 人员增长趋势
 
 ```{r}
@@ -223,6 +224,7 @@ wave |>
   ggplot(aes(x = `Was that an increase, decrease or stable number?`)) + 
   geom_bar()
 ```
+
 大部分associations的人数都比较稳定。有12家组织人员正在增长，while 10家正在减少。值得注意的是，Australian Council for Educational Leaders作为一家在2025年有4000名成员的大公司，他们也是面对成员减少问题的其中之一。
 
 ###'Early Career' vs 'Pre Service'
@@ -259,6 +261,7 @@ write.csv(LLM_wave_pre, "LLM_wave_pre.csv")
 LLM_wave_pre_classified <- read_csv("LLM_wave_pre_classified.csv") %>%
   select(-"Unnamed: 0")
 ```
+
 ```{r}
 # 不用了，或许画饼图会更好？
 LLM_wave_pre_classified |>
@@ -305,6 +308,7 @@ bind_rows(pre_data, early_data) %>%
   labs(title = "Comparison of Service Offerings Between Pre-Service and Early Career Educators", x = "Service Categories", y = "Count") + 
   theme(axis.text.x = element_text(angle = 60, hjust = 1))
 ```
+
 可以观察到两个群体有一些共同点。Both两个群体，有超过十家公司提到给他们提供了professional development和training相关的服务。这说明协会如果针对这两个群体提供服务，比较倾向于通过培训、职业发展和专业能力提升来支持他们。
 
 Events & Conferences 也比较稳定，是经常被提到的新手福利之一。会议和活动可能是协会连接学生教师/职初教师的重要方式。
@@ -314,11 +318,141 @@ Events & Conferences 也比较稳定，是经常被提到的新手福利之一�
 相反，Networking & Community Support 在 Early Career Educators 中更突出。这可能反映出职初教师进入职业阶段后，也许对建立职业网络、同行交流和专业社区的需求更加明显。
 
 部分组织提到了Mentoring ，但是比例较低。说明 mentoring 目前并不是协会最普遍提供的服务。此外被提到的帮助服务还有Career and Employment Support, Classroom&Practical Support等。值得提到的是。在“Ohter/Unclear”中包含的大多是填写了Yes但没写具体内容的组织。
+
 ```{r}
 wave |>
   filter(`How many 'Early Career' or 'Pre Service' members do you have?` == "51-100")
 ```
 
-##活动举办 
+##活动举办
+```{r}
+# LLM
 
-#Advice 建议将调查客户详细地址改成询问active的地区（州/城市） "Do you offer any discounted memberships to Early Career Educators?"和 "Do you offer a discounted membership to "Early Careers" or "Pre-Service"?"问题重复 "What are your Member categories?"问题表述不清晰，比如有些人回答unsure what categories you mean "What locations are you using to run your events?"问题太笼统，有些写的类似school的地点，而有些写的是城市 2.是否给学前教育提供帮助，问题重复了
+LLM_wave_eve <- wave %>%
+  mutate(serial_num = row_number()) %>%
+  select("How many professional learning events does your Association run each year?", "What type of events are they?", "What locations are you using to run your events?", "Who are your target Members?", "What are your Member categories?", "How do you advertise for Members?")
+
+write.csv(LLM_wave_eve, "LLM_wave_eve.csv")
+```
+
+```{r}
+LLM_wave_eve_classified <- read_csv("LLM_wave_eve_classified.csv")
+```
+
+```{r}
+LLM_wave_eve_classified$`Classification - Professional Learning Event Frequency`[LLM_wave_eve_classified$`How many professional learning events does your Association run each year?` == "4 in late 2024 and panning for 10 in 2025"] <- "2-5"
+
+LLM_wave_eve_classified$`Classification - Professional Learning Event Frequency`[LLM_wave_eve_classified$`How many professional learning events does your Association run each year?` == "2"] <- "2-5"
+
+LLM_wave_eve_classified$`Classification - Professional Learning Event Frequency`[LLM_wave_eve_classified$`How many professional learning events does your Association run each year?` == "up to 8"] <- "5-10"
+```
+
+```{r}
+# frequency
+LLM_wave_eve_classified <- LLM_wave_eve_classified %>%
+  mutate(`Classification - Professional Learning Event Frequency` = factor(`Classification - Professional Learning Event Frequency`, c("0", "1", "2-5", "5-10", "10-20", ">20")))
+
+LLM_wave_eve_classified %>%
+  ggplot(aes(x = `Classification - Professional Learning Event Frequency`)) + 
+  geom_bar()
+
+# LLM_wave_eve_classified |>
+#   separate_rows(`Classification - Professional Learning Event Frequency`, sep = "; ") %>%
+#   count(`Classification - Professional Learning Event Frequency`)
+```
+Professional Learning 活动的举办频率整体呈现出较为明显的集中趋势，大多数 Association 每年举办 2–5 场活动，约占全部 Association 的 72%。随着活动数量增加，Association 的比例逐渐下降：约 13% 每年举办 5–10 场，约 7% 举办 10–20 场，而每年举办超过 20 场的仅有 3 家（约 5%）。这表明大多数 Association 的 Professional Learning 活动维持在相对适中的频率，但同时存在少数活动举办频率明显较高的 Association，呈现出“小部分高频低频、大部分中等频率”的分布模式。
+
+```{r}
+LLM_wave_eve_classified |>
+  separate_rows(`Classification - Event Types`, sep = "; ") %>%
+  filter(`Classification - Event Types` != "Unsure") %>%
+  mutate(`Classification - Event Types` = fct_relevel(`Classification - Event Types`, "Other", after = Inf)) %>%
+  ggplot(aes(x = `Classification - Event Types`)) + 
+  geom_bar() + 
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+LLM_wave_eve_classified |>
+  separate_rows(`Classification - Event Types`, sep = "; ") %>%
+  count(`Classification - Event Types`)
+```
+最常举办的活动形式是Professional learning / Workshops和Conferences。Online / Hybrid events占比很少，大约只占11%。除了常规的学习相关的活动，还有一些Networking / Community events活动和Competitions也会被举办。
+
+```{r}
+LLM_wave_eve_classified |>
+  separate_rows(`Classification - Event Locations`, sep = "; ") %>%
+  filter(`Classification - Event Locations` != "Unsure") %>%
+  mutate(`Classification - Event Locations` = fct_relevel(`Classification - Event Locations`, "Other", after = Inf)) %>%
+  ggplot(aes(x = `Classification - Event Locations`)) + 
+  geom_bar() + 
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+LLM_wave_eve_classified |>
+  separate_rows(`Classification - Event Locations`, sep = "; ") %>%
+  count(`Classification - Event Locations`)
+```
+It is obvivous school是举办活动最常用的地方，其他常用的地方有Community / Public / Special venues和Education / Training centres。Hotels / Conference venues和Universities / TAFE也多次被提及。Online活动占所有被提及的次数只有9次，占整体的9%。
+
+##广告受众
+
+```{r}
+LLM_wave_eve_classified |>
+  separate_rows(`Classification - Target Members`, sep = "; ") %>%
+  mutate(`Classification - Target Members` = fct_relevel(`Classification - Target Members`, "Other", after = Inf)) %>%
+  ggplot(aes(x = `Classification - Target Members`)) + 
+  geom_bar() + 
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+```
+Among 61名members中, 超过50个members认为Educators and Professional Practitioners是它们的target members，占整体的大约82%。是最主要的target members群体，此外经常被提及的target members还有Leaders / Senior Professionals和Students / Pre-service / Early Career。有大约20% of them 以Schools / Organisations / Services这类组织作为受众。
+
+```{r}
+LLM_wave_eve_classified |>
+  separate_rows(`Classification - Member Categories`, sep = "; ") %>%
+  mutate(`Classification - Member Categories` = fct_relevel(`Classification - Member Categories`, "Other", after = Inf)) %>%
+  ggplot(aes(x = `Classification - Member Categories`)) + 
+  geom_bar() + 
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+```
+超过40个协会会员不仅有Individual / Full membership，也有面向组织（such as school等）的membership类型。面向学生和pre-service的人的membership也是主要的会员类型之一。
+值得注意的是，many of them 为students和pre-service提供专门的membership类型，远多于提供early career的associate。也有20家association提供了Retired / Life / Honorary membership这种类型。综上，these association的会员种类主要是按会员的类型（个人/组织）和职业阶段来区分的。
+
+```{r}
+LLM_wave_eve_classified |>
+  separate_rows(`Classification - Member Advertising`, sep = "; ") %>%
+  mutate(`Classification - Member Advertising` = fct_relevel(`Classification - Member Advertising`, "Other", after = Inf)) %>%
+  ggplot(aes(x = `Classification - Member Advertising`)) + 
+  geom_bar() + 
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+```
+在会员宣传方面，Email / Direct mail / Newsletter和Social media / Digital platforms是最常被使用的两种广告方式。Events / Professional learning和Member / Professional networks & Partnerships和Website / Online presence也是常被使用来吸引members的方式。此外Direct outreach / Institutional contacts和Program / Renewal-based recruitment也被提及用于广告宣传，但是只有很少部分of them使用。
+
+```{r}
+LLM_wave_eve_classified |>
+  separate_rows(`Classification - Target Members`, sep = "; ") %>%
+  count(`Classification - Target Members`)
+
+LLM_wave_eve_classified |>
+  separate_rows(`Classification - Member Categories`, sep = "; ") %>%
+  count(`Classification - Member Categories`) 
+
+LLM_wave_eve_classified |>
+  separate_rows(`Classification - Member Advertising`, sep = "; ") %>%
+  count(`Classification - Member Advertising`)
+```
+
+# 和edsa的利害关系
+"What does your Association hope to contribute as an organisation to Educators SA?"
+"What do you hope to get from being a member of Educators SA?"
+
+会员福利
+"What services does your Association offer?"
+"What kinds of resources/publications do you provide?"
+
+公司的未来发展
+"What is your biggest advocacy issue for 2025?"
+"What are the biggest threats to your Association in 2025?"
+
+#Advice 
+
+建议将调查客户详细地址改成询问active的地区（州/城市） "Do you offer any discounted memberships to Early Career Educators?"和 "Do you offer a discounted membership to "Early Careers" or "Pre-Service"?"问题重复 "What are your Member categories?"问题表述不清晰，比如有些人回答unsure what categories you mean "What locations are you using to run your events?"问题太笼统，有些写的类似school的地点，而有些写的是城市 2.是否给学前教育提供帮助，问题重复了
+
+部分问题不清楚，比如members的categories，有人回答不清楚categories意味着什么，可以使用i.e.
