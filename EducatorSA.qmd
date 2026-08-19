@@ -167,8 +167,8 @@ check_missing_gateway <- miss_var_summary(gateway)
 ```
 
 ```{r}
-new_member <- anti_join(wave, gateway, by = "asso_name")
-leave_member <- anti_join(gateway, wave, by = "asso_name")
+# new_member <- anti_join(wave, gateway, by = "asso_name")
+# leave_member <- anti_join(gateway, wave, by = "asso_name")
 ```
 
 ##会员规模
@@ -227,7 +227,7 @@ wave |>
 
 大部分associations的人数都比较稳定。有12家组织人员正在增长，while 10家正在减少。值得注意的是，Australian Council for Educational Leaders作为一家在2025年有4000名成员的大公司，他们也是面对成员减少问题的其中之一。
 
-###'Early Career' vs 'Pre Service'
+\###'Early Career' vs 'Pre Service'
 
 ```{r}
 wave|>
@@ -325,6 +325,7 @@ wave |>
 ```
 
 ##活动举办
+
 ```{r}
 # LLM
 
@@ -360,6 +361,7 @@ LLM_wave_eve_classified %>%
 #   separate_rows(`Classification - Professional Learning Event Frequency`, sep = "; ") %>%
 #   count(`Classification - Professional Learning Event Frequency`)
 ```
+
 Professional Learning 活动的举办频率整体呈现出较为明显的集中趋势，大多数 Association 每年举办 2–5 场活动，约占全部 Association 的 72%。随着活动数量增加，Association 的比例逐渐下降：约 13% 每年举办 5–10 场，约 7% 举办 10–20 场，而每年举办超过 20 场的仅有 3 家（约 5%）。这表明大多数 Association 的 Professional Learning 活动维持在相对适中的频率，但同时存在少数活动举办频率明显较高的 Association，呈现出“小部分高频低频、大部分中等频率”的分布模式。
 
 ```{r}
@@ -375,6 +377,7 @@ LLM_wave_eve_classified |>
   separate_rows(`Classification - Event Types`, sep = "; ") %>%
   count(`Classification - Event Types`)
 ```
+
 最常举办的活动形式是Professional learning / Workshops和Conferences。Online / Hybrid events占比很少，大约只占11%。除了常规的学习相关的活动，还有一些Networking / Community events活动和Competitions也会被举办。
 
 ```{r}
@@ -390,6 +393,7 @@ LLM_wave_eve_classified |>
   separate_rows(`Classification - Event Locations`, sep = "; ") %>%
   count(`Classification - Event Locations`)
 ```
+
 It is obvivous school是举办活动最常用的地方，其他常用的地方有Community / Public / Special venues和Education / Training centres。Hotels / Conference venues和Universities / TAFE也多次被提及。Online活动占所有被提及的次数只有9次，占整体的9%。
 
 ##广告受众
@@ -402,6 +406,7 @@ LLM_wave_eve_classified |>
   geom_bar() + 
   theme(axis.text.x = element_text(angle = 60, hjust = 1))
 ```
+
 Among 61名members中, 超过50个members认为Educators and Professional Practitioners是它们的target members，占整体的大约82%。是最主要的target members群体，此外经常被提及的target members还有Leaders / Senior Professionals和Students / Pre-service / Early Career。有大约20% of them 以Schools / Organisations / Services这类组织作为受众。
 
 ```{r}
@@ -412,8 +417,8 @@ LLM_wave_eve_classified |>
   geom_bar() + 
   theme(axis.text.x = element_text(angle = 60, hjust = 1))
 ```
-超过40个协会会员不仅有Individual / Full membership，也有面向组织（such as school等）的membership类型。面向学生和pre-service的人的membership也是主要的会员类型之一。
-值得注意的是，many of them 为students和pre-service提供专门的membership类型，远多于提供early career的associate。也有20家association提供了Retired / Life / Honorary membership这种类型。综上，these association的会员种类主要是按会员的类型（个人/组织）和职业阶段来区分的。
+
+超过40个协会会员不仅有Individual / Full membership，也有面向组织（such as school等）的membership类型。面向学生和pre-service的人的membership也是主要的会员类型之一。 值得注意的是，many of them 为students和pre-service提供专门的membership类型，远多于提供early career的associate。也有20家association提供了Retired / Life / Honorary membership这种类型。综上，these association的会员种类主要是按会员的类型（个人/组织）和职业阶段来区分的。
 
 ```{r}
 LLM_wave_eve_classified |>
@@ -423,6 +428,7 @@ LLM_wave_eve_classified |>
   geom_bar() + 
   theme(axis.text.x = element_text(angle = 60, hjust = 1))
 ```
+
 在会员宣传方面，Email / Direct mail / Newsletter和Social media / Digital platforms是最常被使用的两种广告方式。Events / Professional learning和Member / Professional networks & Partnerships和Website / Online presence也是常被使用来吸引members的方式。此外Direct outreach / Institutional contacts和Program / Renewal-based recruitment也被提及用于广告宣传，但是只有很少部分of them使用。
 
 ```{r}
@@ -440,18 +446,137 @@ LLM_wave_eve_classified |>
 ```
 
 # 和edsa的利害关系
-"What does your Association hope to contribute as an organisation to Educators SA?"
-"What do you hope to get from being a member of Educators SA?"
 
-会员福利
+```{r}
+# LLM
+
+LLM_wave_rest <- wave %>%
+  mutate(serial_num = row_number()) %>%
+  select("What kinds of resources/publications do you provide?", "What is your biggest advocacy issue for 2025?", "What are the biggest threats to your Association in 2025?", "What does your Association hope to contribute as an organisation to Educators SA?", "What do you hope to get from being a member of Educators SA?")
+
+write.csv(LLM_wave_rest, "LLM_wave_rest.csv")
+```
+
 "What services does your Association offer?"
-"What kinds of resources/publications do you provide?"
+"Does your association offer “Consultancy services” to sites or individuals?"
 
-公司的未来发展
-"What is your biggest advocacy issue for 2025?"
-"What are the biggest threats to your Association in 2025?"
+```{r}
+LLM_wave_rest_classified <- read_csv("LLM_wave_rest_classified.csv")
+```
 
-#Advice 
+
+### Service
+```{r}
+wave$`Does your association offer “Consultancy services” to sites or individuals?`[wave$`Does your association offer “Consultancy services” to sites or individuals?` == "We offer onsite PL services - negotiated times, topics and presenters"] <- "Yes"
+
+wave |>
+  ggplot(aes(x = `Does your association offer “Consultancy services” to sites or individuals?`)) + 
+  geom_bar()
+
+wave |>
+  count(`Does your association offer “Consultancy services” to sites or individuals?`)
+
+```
+
+```{r}
+wave |>
+  separate_rows(`What services does your Association offer?`, sep = "; ") %>%
+  filter(!is.na(`What services does your Association offer?`)) %>%
+  ggplot(aes(x = fct_rev(fct_infreq(`What services does your Association offer?`)))) + 
+  geom_bar() + 
+  coord_flip() + 
+  labs(x = "What services does your Association offer?")
+
+wave |>
+  separate_rows(`What services does your Association offer?`, sep = "; ") %>%
+  filter(!is.na(`What services does your Association offer?`)) %>%
+  count(`What services does your Association offer?`)
+```
+只有约18%的associations有Consultancy services。这些 associations 更倾向于提供 professional learning、advocacy、events、publications 等服务，而不是提供一对一或专业咨询服务。
+
+```{r}
+LLM_wave_rest_classified |>
+  separate_rows(`Resources/Publications Category`, sep = "; ") %>%
+  mutate(`Resources/Publications Category` = fct_relevel(`Resources/Publications Category`, "Other", after = Inf)) %>%
+  ggplot(aes(x = `Resources/Publications Category`)) + 
+  geom_bar() + 
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+LLM_wave_rest_classified |>
+  separate_rows(`Resources/Publications Category`, sep = "; ") %>%
+  count(`Resources/Publications Category`)
+```
+Resources/Publications Category中，Digital/online resources和Teaching & curriculum resources是最高频的种类。这说明 associations 提供的 resources 很大程度上是：accessible, practical and directly relevant to educators’ teaching practice而不是单纯的学术研究材料。
+
+```{r}
+LLM_wave_rest_classified |>
+  separate_rows(`Advocacy Issue Category`, sep = "; ") %>%
+  mutate(`Advocacy Issue Category` = fct_relevel(`Advocacy Issue Category`, "Unsure", after = Inf)) %>%
+  ggplot(aes(x = `Advocacy Issue Category`)) + 
+  geom_bar() + 
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+LLM_wave_rest_classified |>
+  separate_rows(`Advocacy Issue Category`, sep = "; ") %>%
+  count(`Advocacy Issue Category`) 
+```
+Curriculum & education policy和Subject-specific advocacy
+
+
+```{r}
+LLM_wave_rest_classified |>
+  separate_rows(`Threats Category`, sep = "; ") %>%
+  mutate(`Threats Category` = fct_relevel(`Threats Category`, "Other", after = Inf)) %>%
+  ggplot(aes(x = `Threats Category`)) + 
+  geom_bar() + 
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+```
+
+```{r}
+LLM_wave_rest_classified |>
+  separate_rows(`Contribution to Educators SA Category`, sep = "; ") %>%
+  mutate(`Contribution to Educators SA Category` = fct_relevel(`Contribution to Educators SA Category`, "Other", after = Inf)) %>%
+  ggplot(aes(x = `Contribution to Educators SA Category`)) + 
+  geom_bar() + 
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+LLM_wave_rest_classified |>
+  separate_rows(`Contribution to Educators SA Category`, sep = "; ") %>%
+  count(`Contribution to Educators SA Category`) 
+```
+Specialist expertise是所有类别中最高的，明显高于其他词频高的词。这说明associations普遍willing为Educator SA提供专业知识、行业经验和领域expertise。这对EducatorSA来说无疑是重要的。同时Participation & engagement也被提到20次，说明associations也希望积极参与相关活动，而不仅仅是提供知识。
+Advocacy & representation和Networking & collaboration也是经常被提到的内容。这说明association同时也能够帮助EducatorSA建立合作关系、共同开展工作或促进不同组织之间的合作，建立更大的profressional network。
+
+```{r}
+LLM_wave_rest_classified |>
+  separate_rows(`Expected Membership Benefits Category`, sep = "; ") %>%
+  mutate(`Expected Membership Benefits Category` = fct_relevel(`Expected Membership Benefits Category`, "Other", after = Inf)) %>%
+  ggplot(aes(x = `Expected Membership Benefits Category`)) + 
+  geom_bar() + 
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+LLM_wave_rest_classified |>
+  separate_rows(`Expected Membership Benefits Category`, sep = "; ") %>%
+  count(`Expected Membership Benefits Category`)
+```
+
+而association希望从EducatorSA获取的内容却show difference。associations最关注的是Networking & collaboration，远高于其他。Advocacy & collective voice，Community & belonging，Support & community这些分类也表明了members对associations之间交流的需求。也就是说associations比起专业知识，更希望能通过Educator SA认识其他组织、建立合作关系、寻找合作机会等。同时Governance & administration的数据也显示，associations希望获得 governance、administration、committee 等协会管理方面的帮助。这也和之前的question的研究结果一致。这意味着对EducatorSA 来说，促进组织间的交流与合作应该是重要的目标之一。
+
+Advice & support，Association development，Membership & association development，Practical operational support，Professional development
+
+信息
+Information & policy
+推广
+Promotion & event support
+资金
+Financial support，Funding & grants
+
+
+会员福利  
+
+公司的未来发展  
+
+#Advice
 
 建议将调查客户详细地址改成询问active的地区（州/城市） "Do you offer any discounted memberships to Early Career Educators?"和 "Do you offer a discounted membership to "Early Careers" or "Pre-Service"?"问题重复 "What are your Member categories?"问题表述不清晰，比如有些人回答unsure what categories you mean "What locations are you using to run your events?"问题太笼统，有些写的类似school的地点，而有些写的是城市 2.是否给学前教育提供帮助，问题重复了
 
