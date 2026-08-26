@@ -155,6 +155,10 @@ gateway <- gateway %>%
 ```
 
 ```{r}
+gateway$`How many current financial members do you have?`[gateway$`How many current financial members do you have?` == "100"] <- "51-100"
+```
+
+```{r}
 gateway$`Signup Time` <- as.Date(gateway$`Signup Time`, format = "%Y-%m-%d")
 ```
 
@@ -179,7 +183,8 @@ check_missing_gateway <- miss_var_summary(gateway)
 wave |>
   filter(!is.na(`How many current financial members do you have?`)) |>
   ggplot(aes(x = `How many current financial members do you have?`)) +
-  geom_bar()
+  geom_bar() + 
+  coord_cartesian(ylim = c(0,30))
 
 ```
 
@@ -188,6 +193,17 @@ wave |>
 ```{r}
 sum(wave$`How many current financial members do you have?`)
 ```
+
+```{r}
+gateway |>
+  filter(!is.na(`How many current financial members do you have?`)) |>
+  mutate(`How many current financial members do you have?` = factor(`How many current financial members do you have?`, levels = c("0-50", "51-100", "101-150", "151-200", "200+"))) |>
+  ggplot(aes(x = `How many current financial members do you have?`)) +
+  geom_bar() + 
+  coord_cartesian(ylim = c(0,30))
+
+```
+通过对比gateway和wave，可以发现“0-50”区间的占比明显减少了，整体分布变化不大。注意wave平台有14个association都没有填写此项，不能将频次直接对比
 
 ###24-25年变化
 
@@ -227,7 +243,7 @@ wave |>
 
 大部分associations的人数都比较稳定。有12家组织人员正在增长，while 10家正在减少。值得注意的是，Australian Council for Educational Leaders作为一家在2025年有4000名成员的大公司，他们也是面对成员减少问题的其中之一。
 
-\###'Early Career' vs 'Pre Service'
+###'Early Career' vs 'Pre Service'
 
 ```{r}
 wave|>
@@ -239,6 +255,24 @@ wave|>
 According to the bar chart, association中'Early Career' or 'Pre Service'为0-10的占比比较多。这说明大部分组织'Early Career' or 'Pre Service'的会员占比很少，有多于50的'Early Career' or 'Pre Service'的组织人数也比较多，比如South Australian Science Teachers Association
 
 ```{r}
+gateway|>
+  filter(!is.na(`How many 'Early Career' or 'Pre Service' members do you have?`))|>
+  mutate(`How many 'Early Career' or 'Pre Service' members do you have?` = factor(`How many 'Early Career' or 'Pre Service' members do you have?`, levels = c("0-10", "11-30", "31-50", "51-100", "100+", "unsure"))) |>
+  ggplot(aes(x = `How many 'Early Career' or 'Pre Service' members do you have?`)) +
+  geom_bar()
+```
+
+与gateway平台的数据相比，wave数据中的“0-10”占比明显下降，也就是说从总体上来讲各个association的'Early Career' or 'Pre Service'的人数都有所增长。
+
+```{r}
+gateway |>
+  mutate(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?` = factor(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?`, levels = c("Yes", "No"))) %>%
+  ggplot(aes(x = `Do you offer a discounted membership to "Early Careers" or "Pre-Service"?`)) + 
+  geom_bar()
+```
+
+
+```{r}
 wave |>
   mutate(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?` = factor(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?`, levels = c("Yes", "No"))) %>%
   ggplot(aes(x = `Do you offer a discounted membership to "Early Careers" or "Pre-Service"?`)) + 
@@ -246,6 +280,7 @@ wave |>
 ```
 
 通过图表可以看出，大部分，which is 71.9%组织为'Early Career' or 'Pre Service'提供折扣。
+通过对比gateway和wave的数据，发现offer a discounted membership to "Early Careers" or "Pre-Service"的association从45增加至了约60，while不提供的association略微减少。
 
 ```{r}
 # LLM
@@ -457,15 +492,14 @@ LLM_wave_rest <- wave %>%
 write.csv(LLM_wave_rest, "LLM_wave_rest.csv")
 ```
 
-"What services does your Association offer?"
-"Does your association offer “Consultancy services” to sites or individuals?"
+"What services does your Association offer?" "Does your association offer “Consultancy services” to sites or individuals?"
 
 ```{r}
 LLM_wave_rest_classified <- read_csv("LLM_wave_rest_classified.csv")
 ```
 
-
 ### Service
+
 ```{r}
 wave$`Does your association offer “Consultancy services” to sites or individuals?`[wave$`Does your association offer “Consultancy services” to sites or individuals?` == "We offer onsite PL services - negotiated times, topics and presenters"] <- "Yes"
 
@@ -492,6 +526,7 @@ wave |>
   filter(!is.na(`What services does your Association offer?`)) %>%
   count(`What services does your Association offer?`)
 ```
+
 只有约18%的associations有Consultancy services。这些 associations 更倾向于提供 professional learning、advocacy、events、publications 等服务，而不是提供一对一或专业咨询服务。
 
 ```{r}
@@ -506,6 +541,7 @@ LLM_wave_rest_classified |>
   separate_rows(`Resources/Publications Category`, sep = "; ") %>%
   count(`Resources/Publications Category`)
 ```
+
 Resources/Publications Category中，Digital/online resources和Teaching & curriculum resources是最高频的种类。这说明 associations 提供的 resources 很大程度上是：accessible, practical and directly relevant to educators’ teaching practice而不是单纯的学术研究材料。
 
 ```{r}
@@ -520,8 +556,8 @@ LLM_wave_rest_classified |>
   separate_rows(`Advocacy Issue Category`, sep = "; ") %>%
   count(`Advocacy Issue Category`) 
 ```
-Curriculum & education policy和Subject-specific advocacy
 
+Curriculum & education policy和Subject-specific advocacy
 
 ```{r}
 LLM_wave_rest_classified |>
@@ -544,8 +580,8 @@ LLM_wave_rest_classified |>
   separate_rows(`Contribution to Educators SA Category`, sep = "; ") %>%
   count(`Contribution to Educators SA Category`) 
 ```
-Specialist expertise是所有类别中最高的，明显高于其他词频高的词。这说明associations普遍willing为Educator SA提供专业知识、行业经验和领域expertise。这对EducatorSA来说无疑是重要的。同时Participation & engagement也被提到20次，说明associations也希望积极参与相关活动，而不仅仅是提供知识。
-Advocacy & representation和Networking & collaboration也是经常被提到的内容。这说明association同时也能够帮助EducatorSA建立合作关系、共同开展工作或促进不同组织之间的合作，建立更大的profressional network。
+
+Specialist expertise是所有类别中最高的，明显高于其他词频高的词。这说明associations普遍willing为Educator SA提供专业知识、行业经验和领域expertise。这对EducatorSA来说无疑是重要的。同时Participation & engagement也被提到20次，说明associations也希望积极参与相关活动，而不仅仅是提供知识。 Advocacy & representation和Networking & collaboration也是经常被提到的内容。这说明association同时也能够帮助EducatorSA建立合作关系、共同开展工作或促进不同组织之间的合作，建立更大的profressional network。
 
 ```{r}
 LLM_wave_rest_classified |>
@@ -564,17 +600,11 @@ LLM_wave_rest_classified |>
 
 Advice & support，Association development，Membership & association development，Practical operational support，Professional development
 
-信息
-Information & policy
-推广
-Promotion & event support
-资金
-Financial support，Funding & grants
+信息 Information & policy 推广 Promotion & event support 资金 Financial support，Funding & grants
 
+会员福利
 
-会员福利  
-
-公司的未来发展  
+公司的未来发展
 
 #Advice
 
