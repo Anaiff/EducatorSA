@@ -149,17 +149,15 @@ gateway <- gateway %>%
   select(-c("...10", "Membership Is Subscription", "Surname", "Is Voided", "Membership Paid Date")) %>%
   select(-c("Association", "Email", "President Phone Number", "Co President Name", "Co President Email", "Co President Phone Number", "Vice President Name", "Vice President Email", "Vice President Phone Number", "Secretary Name", "Secretary Email", "Secretary Phone Number", "Treasurer Name", "Treasurer Email", "Treasurer Phone Number", "EdSA Representative Name", "EdSA Representative Email", "EdSA Representative Phone Number", "President Name", "President Email")) %>%
   select(-c(Membership, "Contact Name", "What is your main Event/Conference for the year?", "What are the dates of this Event/Conference?", "When is your AGM due to be held?", "What term is your current President in?", "What are your membership renewal terms?", "Other - Please specify", "If yes, please specify", "If you are aware, what would be the % of your current members in each age group? Age group 18-25 in %", "Approximately, what is the % of your current members in the age group 26-35?", "Approximately, what is the % of your current members in the age group 36-45?", "Approximately, what is the % of your current members in the age group 46-55?", "Approximately, what is the % of your current members in the age group 55+?", "Would you like to be contacted regards the EdSA Gateway Membership Management system?")) %>%
+  select(-c(`Membership Number`, `Signup Time`)) %>%
   rename(acronym = `Association Acronym`, 
-         asso_name = `Association Name`, 
-         memb_number = `Membership Number`)
+         asso_name = `Association Name`
+         ) %>%
+  select(-acronym)
 ```
 
 ```{r}
 gateway$`How many current financial members do you have?`[gateway$`How many current financial members do you have?` == "100"] <- "51-100"
-```
-
-```{r}
-gateway$`Signup Time` <- as.Date(gateway$`Signup Time`, format = "%Y-%m-%d")
 ```
 
 ```{r}
@@ -171,8 +169,9 @@ check_missing_gateway <- miss_var_summary(gateway)
 ```
 
 ```{r}
-# new_member <- anti_join(wave, gateway, by = "asso_name")
-# leave_member <- anti_join(gateway, wave, by = "asso_name")
+new_member <- anti_join(wave, gateway, by = "asso_name")
+leave_member <- anti_join(gateway, wave, by = "asso_name")
+common_member <- inner_join(gateway, wave, by = "asso_name", suffix = c("_gateway", "_wave"))
 ```
 
 ##会员规模
@@ -602,9 +601,71 @@ Advice & support，Association development，Membership & association developmen
 
 信息 Information & policy 推广 Promotion & event support 资金 Financial support，Funding & grants
 
-会员福利
+```{r}
+# LLM
 
-公司的未来发展
+LLM_wave_compare <- wave %>%
+  mutate(serial_num = row_number()) %>%
+  select("What is your biggest advocacy issue for 2025?", "What are the biggest threats to your Association in 2025?", "What does your Association hope to contribute as an organisation to Educators SA?", "What do you hope to get from being a member of Educators SA?")
+
+write.csv(LLM_wave_compare, "LLM_wave_compare.csv")
+```
+
+```{r}
+LLM_wave_compare_classified <- read_csv("LLM_wave_compare_classified.csv")
+```
+```{r}
+# Advocacy Issue Category vs Threats Category
+compare_threat <- bind_rows(
+  LLM_wave_compare_classified %>%
+    separate_rows(`Advocacy Issue Category`, sep = "; ") %>%
+    rename(Category = `Advocacy Issue Category`) %>%
+    mutate( Type = "Advocacy Issue") %>%
+    select(Category, Type),
+
+  LLM_wave_compare_classified %>%
+    separate_rows(`Threats Category`, sep = "; ") %>%
+    rename(Category = `Threats Category`) %>%
+    mutate(Type = "Threats Category") %>%
+    select(Category, Type)
+) %>%
+  count(Category, Type)
+
+compare_threat %>%
+  mutate(Category = fct_relevel(Category, "Other", after = Inf)) %>%
+  mutate(Category = fct_relevel(Category, "Unsure", after = Inf)) %>%
+  ggplot(aes(x = Category, y = n, fill = Type)) +
+  geom_col(position = "dodge") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(y = "Count",title = "What Associations Contribute vs What They Expect from Educators SA")
+```
+
+```{r}
+# What Associations Contribute vs What They Expect from Educators SA
+compare_contribute <- bind_rows(
+  LLM_wave_compare_classified %>%
+    separate_rows(`Contribution to Educators SA Category`, sep = "; ") %>%
+    rename(Category = `Contribution to Educators SA Category`) %>%
+    mutate( Type = "Association Can Contribute") %>%
+    select(Category, Type),
+
+  LLM_wave_compare_classified %>%
+    separate_rows(`Expected Membership Benefits Category`, sep = "; ") %>%
+    rename(Category = `Expected Membership Benefits Category`) %>%
+    mutate(Type = "Association Wants") %>%
+    select(Category, Type)
+) %>%
+  count(Category, Type)
+
+compare_contribute %>%
+  ggplot(aes(x = Category, y = n, fill = Type)) +
+  geom_col(position = "dodge") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(y = "Count",title = "What Associations Contribute vs What They Expect from Educators SA")
+```
+
 
 #Advice
 
