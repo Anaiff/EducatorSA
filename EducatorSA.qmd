@@ -793,6 +793,21 @@ compare_threat %>%
   labs(y = "Count",title = "")
 ```
 
+出现频率最高的类别为 Unsure（13次），表明部分协会尚未明确其主要倡议议题。除去该类别后，
+Unsure 同样是出现次数最多的类别（20次），明显高于其他所有类别。
+
+在 Advocacy Issue 方面，Subject/Program Sustainability & Quality（12次）是最受关注的议题，其次为 Access, Equity & Inclusion（9次）、Education Policy, Curriculum & Standards（9次）以及 Workforce & Staffing（8次）。这些结果反映出协会普遍关注教育质量、教育公平以及教师队伍建设等核心教育议题。
+
+在 Threats Category 方面，其后依次为 Membership & Engagement（15次）和 Workforce & Staffing（12次），说明协会最主要的担忧集中在会员参与度下降、会员维持以及人力资源短缺等组织可持续发展问题上。
+
+协会关注的倡议议题与面临的威胁存在明显差异。协会在对外倡议时更多关注教育体系层面的议题，例如 Subject/Program Sustainability & Quality、Access, Equity & Inclusion 和 Education Policy, Curriculum & Standards；而在讨论威胁时，则更多聚焦于组织运营层面的问题，如 Membership & Engagement、Workforce & Staffing 和 Organisational Governance & Capacity。这表明协会希望推动教育领域的发展，但实际面临的挑战更多来自自身组织能力和会员基础的维持。
+
+Membership & Engagement 是最突出的组织风险。该类别在 Threats 中出现15次，但在 Advocacy Issues 中仅出现6次。这说明会员招募、会员留存及会员参与度是协会当前最普遍的挑战之一，但尚未被广泛视为需要对外倡议解决的问题，更可能属于内部管理和运营问题。
+
+Workforce & Staffing 同时是重要议题和重要威胁。该类别在 Advocacy Issues（8次）和 Threats Category（12次）中均排名靠前，显示教师和教育工作者的人力资源问题不仅影响协会自身运作，也被视为整个教育行业的重要挑战。这可能是未来跨协会合作和联合倡议的重要方向。
+ 
+协会在倡议层面主要关注教育质量、公平与政策等行业发展议题，而在风险层面则更担忧会员参与度下降、人员配置不足及组织能力建设问题。
+
 ```{r}
 # What Associations Contribute vs What They Expect from Educators SA
 compare_contribute <- bind_rows(
