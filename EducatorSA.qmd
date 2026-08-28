@@ -74,7 +74,7 @@ wave[wave$number_members_2024 %in% "check with Gateway data", "number_members_20
 
 wave <- wave %>%
   mutate(number_members_2024 = as.numeric(number_members_2024))
-wave$`How many current financial members do you have?` <- factor(wave$`How many current financial members do you have?`, levels = c("0-50", "51-100", "101-150", "151-200", "200+"))
+wave$`How many current financial members do you have?` <- factor(wave$`How many current financial members do you have?`, levels = c("0-50", "51-100", "101-150", "151-200", "200+", "unsure"))
 wave$`How many 'Early Career' or 'Pre Service' members do you have?` <- factor(wave$`How many 'Early Career' or 'Pre Service' members do you have?`, levels = c("0-10", "11-30", "31-50", "51-100", "unsure"))
 ```
 
@@ -86,6 +86,11 @@ wave[wave$number_committee_members %in% "6 general committee members", "number_c
 
 wave <- wave %>%
   mutate(number_committee_members = as.numeric(number_committee_members))
+```
+
+```{r}
+wave$`How many 'Early Career' or 'Pre Service' members do you have?`[is.na(wave$`How many 'Early Career' or 'Pre Service' members do you have?`)] <- "unsure"
+wave$`How many current financial members do you have?`[is.na(wave$`How many current financial members do you have?`)] <- "unsure"
 ```
 
 ```{r}
@@ -202,7 +207,35 @@ gateway |>
   coord_cartesian(ylim = c(0,30))
 
 ```
+
 通过对比gateway和wave，可以发现“0-50”区间的占比明显减少了，整体分布变化不大。注意wave平台有14个association都没有填写此项，不能将频次直接对比
+
+```{r}
+# 一起的
+# How many 'Early Career' or 'Pre Service' members do you have?
+compare_financial_memb <- bind_rows(
+  common_member %>%
+    select(`How many current financial members do you have?_gateway`) %>%
+    mutate( Platform = "Gateway", 
+            `How many current financial members do you have?` = `How many current financial members do you have?_gateway`),
+
+  common_member %>%
+    select(`How many current financial members do you have?_wave`) %>%
+    mutate( Platform = "WAVE", 
+            `How many current financial members do you have?` = `How many current financial members do you have?_wave`)
+  
+) %>%
+  count(`How many current financial members do you have?`, Platform)
+
+compare_financial_memb %>%
+#  mutate(`How many current financial members do you have?` = fct_relevel(`How many current financial members do you have?`, "Unsure", after = Inf)) %>%
+  mutate(`How many current financial members do you have?` = factor(`How many current financial members do you have?`, levels = c("0-50", "51-100", "101-150", "200+", "unsure"))) %>%
+  ggplot(aes(x = `How many current financial members do you have?`, y = n, fill = Platform)) +
+  geom_col(position = "dodge") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(y = "Count",title = "")
+```
 
 ###24-25年变化
 
@@ -242,9 +275,10 @@ wave |>
 
 大部分associations的人数都比较稳定。有12家组织人员正在增长，while 10家正在减少。值得注意的是，Australian Council for Educational Leaders作为一家在2025年有4000名成员的大公司，他们也是面对成员减少问题的其中之一。
 
-###'Early Career' vs 'Pre Service'
+### 'Early Career' vs 'Pre Service'
 
 ```{r}
+# 旧不用运行
 wave|>
   filter(!is.na(`How many 'Early Career' or 'Pre Service' members do you have?`))|>
   ggplot(aes(x = `How many 'Early Career' or 'Pre Service' members do you have?`)) +
@@ -254,6 +288,7 @@ wave|>
 According to the bar chart, association中'Early Career' or 'Pre Service'为0-10的占比比较多。这说明大部分组织'Early Career' or 'Pre Service'的会员占比很少，有多于50的'Early Career' or 'Pre Service'的组织人数也比较多，比如South Australian Science Teachers Association
 
 ```{r}
+# 旧不用运行
 gateway|>
   filter(!is.na(`How many 'Early Career' or 'Pre Service' members do you have?`))|>
   mutate(`How many 'Early Career' or 'Pre Service' members do you have?` = factor(`How many 'Early Career' or 'Pre Service' members do you have?`, levels = c("0-10", "11-30", "31-50", "51-100", "100+", "unsure"))) |>
@@ -261,7 +296,61 @@ gateway|>
   geom_bar()
 ```
 
-与gateway平台的数据相比，wave数据中的“0-10”占比明显下降，也就是说从总体上来讲各个association的'Early Career' or 'Pre Service'的人数都有所增长。
+```{r}
+# 分开的
+# How many 'Early Career' or 'Pre Service' members do you have?
+compare_early_career <- bind_rows(
+  gateway %>%
+    select(`How many 'Early Career' or 'Pre Service' members do you have?`) %>%
+    mutate( Platform = "Gateway"),
+
+  wave %>%
+    select(`How many 'Early Career' or 'Pre Service' members do you have?`) %>%
+    mutate( Platform = "WAVE")
+  
+) %>%
+  count(`How many 'Early Career' or 'Pre Service' members do you have?`, Platform)
+
+compare_early_career %>%
+  mutate(`How many 'Early Career' or 'Pre Service' members do you have?` = fct_relevel(`How many 'Early Career' or 'Pre Service' members do you have?`, "Unsure", after = Inf)) %>%
+  mutate(`How many 'Early Career' or 'Pre Service' members do you have?` = factor(`How many 'Early Career' or 'Pre Service' members do you have?`, levels = c("0-10", "11-30", "31-50", "51-100", "100+", "unsure"))) %>%
+  ggplot(aes(x = `How many 'Early Career' or 'Pre Service' members do you have?`, y = n, fill = Platform)) +
+  geom_col(position = "dodge") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(y = "Count",title = "What Associations Contribute vs What They Expect from Educators SA")
+```
+
+```{r}
+# 一起的
+# How many 'Early Career' or 'Pre Service' members do you have?
+compare_early_career <- bind_rows(
+  common_member %>%
+    select(`How many 'Early Career' or 'Pre Service' members do you have?_gateway`) %>%
+    mutate( Platform = "Gateway", 
+            `How many 'Early Career' or 'Pre Service' members do you have?` = `How many 'Early Career' or 'Pre Service' members do you have?_gateway`),
+
+  common_member %>%
+    select(`How many 'Early Career' or 'Pre Service' members do you have?_wave`) %>%
+    mutate( Platform = "WAVE", 
+            `How many 'Early Career' or 'Pre Service' members do you have?` = `How many 'Early Career' or 'Pre Service' members do you have?_wave`)
+  
+) %>%
+  count(`How many 'Early Career' or 'Pre Service' members do you have?`, Platform)
+
+compare_early_career %>%
+  mutate(`How many 'Early Career' or 'Pre Service' members do you have?` = fct_relevel(`How many 'Early Career' or 'Pre Service' members do you have?`, "Unsure", after = Inf)) %>%
+  mutate(`How many 'Early Career' or 'Pre Service' members do you have?` = factor(`How many 'Early Career' or 'Pre Service' members do you have?`, levels = c("0-10", "11-30", "31-50", "51-100", "100+", "unsure"))) %>%
+  ggplot(aes(x = `How many 'Early Career' or 'Pre Service' members do you have?`, y = n, fill = Platform)) +
+  geom_col(position = "dodge") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(y = "Count",title = "")
+```
+
+与gateway平台的数据相比，wave数据中的“0-10”占比明显下降。
+
+
 
 ```{r}
 gateway |>
@@ -270,7 +359,6 @@ gateway |>
   geom_bar()
 ```
 
-
 ```{r}
 wave |>
   mutate(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?` = factor(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?`, levels = c("Yes", "No"))) %>%
@@ -278,8 +366,69 @@ wave |>
   geom_bar()
 ```
 
-通过图表可以看出，大部分，which is 71.9%组织为'Early Career' or 'Pre Service'提供折扣。
-通过对比gateway和wave的数据，发现offer a discounted membership to "Early Careers" or "Pre-Service"的association从45增加至了约60，while不提供的association略微减少。
+通过图表可以看出，大部分，which is 71.9%组织为'Early Career' or 'Pre Service'提供折扣。 通过对比gateway和wave的数据，发现offer a discounted membership to "Early Careers" or "Pre-Service"的association从45增加至了约60，while不提供的association略微减少。
+
+```{r}
+# Discount 一起的
+compare_discount <- bind_rows(
+  common_member %>%
+    select(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?_gateway`) %>%
+    mutate( Platform = "Gateway", 
+            `Do you offer a discounted membership to "Early Careers" or "Pre-Service"?` = `Do you offer a discounted membership to "Early Careers" or "Pre-Service"?_gateway`),
+
+  common_member %>%
+    select(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?_wave`) %>%
+    mutate( Platform = "WAVE", 
+            `Do you offer a discounted membership to "Early Careers" or "Pre-Service"?` = `Do you offer a discounted membership to "Early Careers" or "Pre-Service"?_wave`)
+  
+) %>%
+  count(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?`, Platform)
+
+compare_discount %>%
+  mutate(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?` = fct_relevel(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?`, "Unsure", after = Inf)) %>%
+  ggplot(aes(x = `Do you offer a discounted membership to "Early Careers" or "Pre-Service"?`, y = n, fill = Platform)) +
+  geom_col(position = "dodge") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(y = "Count",title = "")
+```
+
+
+```{r}
+gateway_tab <- table(
+  common_member$`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?_gateway`, 
+  common_member$`How many 'Early Career' or 'Pre Service' members do you have?_gateway`
+)
+
+gateway_tab
+```
+
+```{r}
+prop.table(gateway_tab)
+```
+
+```{r}
+wave_tab <- table(
+  common_member$`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?_wave`, 
+  common_member$`How many 'Early Career' or 'Pre Service' members do you have?_wave`
+)
+
+wave_tab
+```
+
+```{r}
+common_member %>%
+  filter(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?_gateway` == "No" & `Do you offer a discounted membership to "Early Careers" or "Pre-Service"?_wave` == "Yes") %>%
+  select(asso_name, `Do you offer a discounted membership to "Early Careers" or "Pre-Service"?_gateway`, `Do you offer a discounted membership to "Early Careers" or "Pre-Service"?_wave`, `How many 'Early Career' or 'Pre Service' members do you have?_gateway`, `How many 'Early Career' or 'Pre Service' members do you have?_wave`)
+```
+
+```{r}
+common_member %>%
+  filter(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?_gateway` == "Yes" & `Do you offer a discounted membership to "Early Careers" or "Pre-Service"?_wave` == "No") %>%
+  select(asso_name, `Do you offer a discounted membership to "Early Careers" or "Pre-Service"?_gateway`, `Do you offer a discounted membership to "Early Careers" or "Pre-Service"?_wave`, `How many 'Early Career' or 'Pre Service' members do you have?_gateway`, `How many 'Early Career' or 'Pre Service' members do you have?_wave`)
+```
+
+在两个数据集共同的33个会员中，有一家association(Modern Greek Language Teachers Association of South Australia) 曾经不为"Early Careers" 和 "Pre-Service"提供折扣而现在提供折扣。有两家association曾经对"Early Careers" 和 "Pre-Service"有折扣而现在不折扣
 
 ```{r}
 # LLM
@@ -601,6 +750,8 @@ Advice & support，Association development，Membership & association developmen
 
 信息 Information & policy 推广 Promotion & event support 资金 Financial support，Funding & grants
 
+# Relationship with Educators SA
+
 ```{r}
 # LLM
 
@@ -614,6 +765,7 @@ write.csv(LLM_wave_compare, "LLM_wave_compare.csv")
 ```{r}
 LLM_wave_compare_classified <- read_csv("LLM_wave_compare_classified.csv")
 ```
+
 ```{r}
 # Advocacy Issue Category vs Threats Category
 compare_threat <- bind_rows(
@@ -638,7 +790,7 @@ compare_threat %>%
   geom_col(position = "dodge") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
-  labs(y = "Count",title = "What Associations Contribute vs What They Expect from Educators SA")
+  labs(y = "Count",title = "")
 ```
 
 ```{r}
@@ -665,7 +817,6 @@ compare_contribute %>%
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
   labs(y = "Count",title = "What Associations Contribute vs What They Expect from Educators SA")
 ```
-
 
 #Advice
 
