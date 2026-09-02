@@ -305,13 +305,25 @@ compare_financial_memb <- bind_rows(
 
 compare_financial_memb %>%
 #  mutate(`How many current financial members do you have?` = fct_relevel(`How many current financial members do you have?`, "Unsure", after = Inf)) %>%
-  mutate(`How many current financial members do you have?` = factor(`How many current financial members do you have?`, levels = c("0-50", "51-100", "101-150", "200+", "unsure"))) %>%
+  mutate(`How many current financial members do you have?` = factor(`How many current financial members do you have?`, levels = c("0-50", "51-100", "101-150", "151-200",  "200+", "unsure"))) %>%
   ggplot(aes(x = `How many current financial members do you have?`, y = n, fill = Platform)) +
   geom_col(position = "dodge") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
-  labs(y = "Count",title = "")
+  labs(y = "Count",title = "Current Financial Member Distribution Across Gateway and WAVE Platforms")
 ```
+
+该图展示了在新旧平台共同的协会会员的当前财务会员（Financial Members）数量分布情况。会员规模被划分为 0–50、51–100、101–150、151-200、200+六个区间。
+
+从整体来看，两个平台上的协会主要集中在较小规模会员区间。0–50 和 51–100 是最常见的会员规模，其中 Gateway 平台分别有约21个和19个协会，WAVE 平台则均为16个协会。相比之下，拥有 101–150 名会员的协会数量较少，两个平台均约为6个协会。
+
+在较大规模协会方面，151-200两个平台都仅只有1个协会。而200+ 会员区间在 Gateway（12个）和 WAVE（10个）中也占有很大的比例，说明部分协会拥有较稳定且规模较大的会员基础。此外，WAVE 平台中有约10个协会没有填写相关内容，而 Gateway 平台几乎没有此类记录，这是由于WAVE是新平台，部分association的信息还没有完善。
+
+对比两个平台的数据，由于新旧平台的member没有发生较大的变动，所以整体分布保持一致。在0-100和200+的区间的组织数量Gateway平台略多于WAVE平台，这有一部分可能也是WAVE平台信息不全导致的。
+
+两个平台中，绝大多数协会的财务会员人数不超过100人。说明 Educators SA 的会员协会整体以小型组织为主。除了大量小型协会外，200+ 会员区间也有较多协会，而 101–200 区间数量明显较少。这表明协会规模可能呈现一定的两极化趋势：部分协会规模较小，而另一部分已经发展出较大的会员基础。
+
+WAVE 平台中较高比例的 Unsure 回答意味着会员规模数据存在一定的不确定性。建议优先完善会员人数记录，以提高数据的可靠性。
 
 ###24-25年变化
 
@@ -334,7 +346,9 @@ wave_filled |>
   geom_text(aes(label = acronym), hjust = -0.2, size = 3)
 ```
 
-<!-- Primary English Teaching Association Australia（PETAA）which在2025年有5200名会员，断层领先，占总会员人数估计值的约28%。然而accoring to他在2024年登记的数量仅有200，实现了非常大的飞跃，这个情况可能还需要后续了解和核实。而Australian Council for Educational Leaders(ACEL)有4000名会员约占整体的21%。需要注意2024年ACEL的数据为缺失值而非实际值。South Australian Science Teachers Association(SASTA)有超过1700名会员占据第三位，该组织相较于2024年会员数量略有增长，总体保持稳定。 -->
+Primary English Teaching Association Australia（PETAA）which在2025年有5200名会员，断层领先，占总会员人数估计值的约28%。然而accoring to他在2024年登记的数量仅有200，实现了非常大的飞跃。经核实，这是由于该组织与政府部门达成合作，大量人员被自动注册成会员。
+
+Leaders(ACEL)有4000名会员约占整体的21%。South Australian Science Teachers Association(SASTA)有超过1700名会员占据第三位，该组织相较于2024年会员数量略有增长，总体保持稳定。
 
 ```{r}
 sum(wave_filled$number_members_2024)
@@ -349,28 +363,9 @@ wave |>
   geom_bar()
 ```
 
-大部分associations的人数都比较稳定。有12家组织人员正在增长，while 10家正在减少。值得注意的是，Australian Council for Educational Leaders作为一家在2025年有4000名成员的大公司，他们也是面对成员减少问题的其中之一。
+大部分associations的人数都比较稳定。有12家组织表示他们的会员数量正在增长，while 10家正在减少。值得注意的是，Australian Council for Educational Leaders作为一家在2025年有4000名成员的大公司，他们也面临成员数量减少问题。
 
 ### 'Early Career' vs 'Pre Service'
-
-```{r}
-# 旧不用运行
-wave|>
-  filter(!is.na(`How many 'Early Career' or 'Pre Service' members do you have?`))|>
-  ggplot(aes(x = `How many 'Early Career' or 'Pre Service' members do you have?`)) +
-  geom_bar()
-```
-
-According to the bar chart, association中'Early Career' or 'Pre Service'为0-10的占比比较多。这说明大部分组织'Early Career' or 'Pre Service'的会员占比很少，有多于50的'Early Career' or 'Pre Service'的组织人数也比较多，比如South Australian Science Teachers Association
-
-```{r}
-# 旧不用运行
-gateway|>
-  filter(!is.na(`How many 'Early Career' or 'Pre Service' members do you have?`))|>
-  mutate(`How many 'Early Career' or 'Pre Service' members do you have?` = factor(`How many 'Early Career' or 'Pre Service' members do you have?`, levels = c("0-10", "11-30", "31-50", "51-100", "100+", "unsure"))) |>
-  ggplot(aes(x = `How many 'Early Career' or 'Pre Service' members do you have?`)) +
-  geom_bar()
-```
 
 ```{r}
 # 分开的
@@ -394,11 +389,23 @@ compare_early_career %>%
   geom_col(position = "dodge") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
-  labs(y = "Count",title = "What Associations Contribute vs What They Expect from Educators SA")
+  labs(y = "Count",title = "Distribution of Early Career/Pre-Service Members Across Gateway and WAVE platforms")
 ```
 
+该图展示了 Gateway 和 WAVE 平台中协会拥有的 Early Career/Pre-Service Members 数量分布情况。
+
+从整体来看，大多数协会的 Early Career / Pre-Service 会员规模较小。两个平台中，0–10人区间均占绝对多数（Gateway 46个协会，WAVE 32个协会），远高于其他规模区间。拥有超过30名 Early Career / Pre-Service 会员的协会数量非常少。
+
+此外，WAVE 有18个没有提供这个信息的组织，while Gateway 有9个，显示部分协会对 Early Career 会员规模缺乏准确记录。
+
+无论是 Gateway 还是 WAVE，大部分协会的 Early Career / Pre-Service 会员人数均不超过10人。这说明 Early Career 群体在许多协会中的占比较低，可能尚未成为协会会员结构中的主要组成部分。
+
+虽然数量不多，但仍有部分协会拥有 31–50 或 51–100 名 Early Career 会员，说明某些协会已经建立了较成熟的 Early Career 参与机制。这些协会的做法值得进一步研究和推广。
+
+WAVE 平台中约三分之一的协会无法明确提供 Early Career 会员数量（18个 Unsure），高于 Gateway 平台。这可能影响后续对青年会员参与情况的准确评估，也提示协会需要加强会员分类统计和记录管理。
 ```{r}
-# 一起的
+# 不用了
+# 一起的 - 经决定不用了
 # How many 'Early Career' or 'Pre Service' members do you have?
 compare_early_career <- bind_rows(
   common_member %>%
@@ -424,27 +431,9 @@ compare_early_career %>%
   labs(y = "Count",title = "")
 ```
 
-与gateway平台的数据相比，wave数据中的“0-10”占比明显下降。
 
 ```{r}
-gateway |>
-  mutate(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?` = factor(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?`, levels = c("Yes", "No"))) %>%
-  ggplot(aes(x = `Do you offer a discounted membership to "Early Careers" or "Pre-Service"?`)) + 
-  geom_bar()
-```
-
-```{r}
-wave |>
-  mutate(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?` = factor(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?`, levels = c("Yes", "No"))) %>%
-  ggplot(aes(x = `Do you offer a discounted membership to "Early Careers" or "Pre-Service"?`)) + 
-  geom_bar()
-```
-
-通过图表可以看出，大部分，which is 71.9%组织为'Early Career' or 'Pre Service'提供折扣。 通过对比gateway和wave的数据，发现offer a discounted membership to "Early Careers" or "Pre-Service"的association从45增加至了约60，while不提供的association略微减少。
-
-```{r}
-# Discount 一起的
-compare_discount <- bind_rows(
+compare_early_career_discount <- bind_rows(
   common_member %>%
     select(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?_gateway`) %>%
     mutate( Platform = "Gateway", 
@@ -458,14 +447,15 @@ compare_discount <- bind_rows(
 ) %>%
   count(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?`, Platform)
 
-compare_discount %>%
-  mutate(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?` = fct_relevel(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?`, "Unsure", after = Inf)) %>%
+compare_early_career_discount %>%
+  mutate(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?` = factor(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?`, levels = c("Yes", "No"))) %>%
   ggplot(aes(x = `Do you offer a discounted membership to "Early Careers" or "Pre-Service"?`, y = n, fill = Platform)) +
   geom_col(position = "dodge") +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
   labs(y = "Count",title = "")
 ```
+
+通过图表可以看出，大部分，which is 71.9%组织为'Early Career' or 'Pre Service'提供折扣。 通过对比gateway和wave的数据，发现offer a discounted membership to "Early Careers" or "Pre-Service"的association从45增加至了约60，while不提供的association略微减少。
 
 ```{r}
 gateway_tab <- table(
@@ -501,7 +491,7 @@ common_member %>%
   select(asso_name, `Do you offer a discounted membership to "Early Careers" or "Pre-Service"?_gateway`, `Do you offer a discounted membership to "Early Careers" or "Pre-Service"?_wave`, `How many 'Early Career' or 'Pre Service' members do you have?_gateway`, `How many 'Early Career' or 'Pre Service' members do you have?_wave`)
 ```
 
-在两个数据集共同的33个会员中，有一家association(Modern Greek Language Teachers Association of South Australia) 曾经不为"Early Careers" 和 "Pre-Service"提供折扣而现在提供折扣。有两家association曾经对"Early Careers" 和 "Pre-Service"有折扣而现在不折扣
+在两个数据集共同的33个会员中，有三家association(Modern Greek Language Teachers Association of South Australia) 曾经不为"Early Careers" 和 "Pre-Service"提供折扣而现在提供折扣。有两家association曾经对"Early Careers" 和 "Pre-Service"有折扣而现在不折扣
 
 ```{r}
 # LLM
