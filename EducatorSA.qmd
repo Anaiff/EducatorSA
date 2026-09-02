@@ -148,21 +148,55 @@ gateway <- read_excel("D:/Desktop/EducatorSA/Gateway_exports_association_users_e
 ```
 
 ```{r}
+# 删除测试数据
 gateway <- gateway %>%
   filter(!(`Contact Name` %in% "Please")) %>%
   filter(!(Membership %in% "Admin")) %>%
-  select(-c("...10", "Membership Is Subscription", "Surname", "Is Voided", "Membership Paid Date")) %>%
-  select(-c("Association", "Email", "President Phone Number", "Co President Name", "Co President Email", "Co President Phone Number", "Vice President Name", "Vice President Email", "Vice President Phone Number", "Secretary Name", "Secretary Email", "Secretary Phone Number", "Treasurer Name", "Treasurer Email", "Treasurer Phone Number", "EdSA Representative Name", "EdSA Representative Email", "EdSA Representative Phone Number", "President Name", "President Email")) %>%
-  select(-c(Membership, "Contact Name", "What is your main Event/Conference for the year?", "What are the dates of this Event/Conference?", "When is your AGM due to be held?", "What term is your current President in?", "What are your membership renewal terms?", "Other - Please specify", "If yes, please specify", "If you are aware, what would be the % of your current members in each age group? Age group 18-25 in %", "Approximately, what is the % of your current members in the age group 26-35?", "Approximately, what is the % of your current members in the age group 36-45?", "Approximately, what is the % of your current members in the age group 46-55?", "Approximately, what is the % of your current members in the age group 55+?", "Would you like to be contacted regards the EdSA Gateway Membership Management system?")) %>%
-  select(-c(`Membership Number`, `Signup Time`)) %>%
   rename(acronym = `Association Acronym`, 
          asso_name = `Association Name`
-         ) %>%
-  select(-acronym)
+         ) 
 ```
 
 ```{r}
 gateway$`How many current financial members do you have?`[gateway$`How many current financial members do you have?` == "100"] <- "51-100"
+```
+
+```{r}
+# 检查重复
+gateway |>
+  filter(duplicated(gateway$acronym) == TRUE)
+
+```
+
+```{r}
+# 删除重复
+gateway <- gateway %>%
+  filter(!(asso_name == "Modern Language Teachers Association of South Australia" & `Membership Number` == "EdSA1648")) %>%
+  filter(!(asso_name == "The Laboratory Managers Association of SA")) %>%
+  filter(!(asso_name == "Legal Education Teachers Association of South Australia")) %>%
+  filter(!(asso_name == "South Australian German Teachers Association" & `Membership Number` == "EdSA1031")) %>%
+  filter(!(asso_name == "History Teachers Association of South Australia" & `Membership Number` == "EdSA2737")) %>%
+  filter(!(asso_name == "South Australian Council for Adult Literacy, Inc." & `Membership Number` == "EdSA2740")) %>%
+  filter(!(asso_name == "Geography Teachers Association of SA" & `Membership Number` == "EdSA1073")) %>%
+  filter(!(asso_name == "Geography Teacher's Assocaition of South Australia" & `Membership Number` == "EdSA4555")) %>%
+  filter(!(asso_name == "Modern Greek Language Teachers Association of South Australia Inc")) %>%
+  filter(!(asso_name == "The Australian Council for Educational Leaders (SA Branch)")) %>%
+  filter(!(asso_name == "Out of School Hours Care (SA) Association Inc.")) 
+  
+  
+```
+
+```{r}
+gateway |>
+  filter(duplicated(gateway$acronym) == TRUE)
+```
+
+```{r}
+gateway <- gateway %>%
+  select(-c("...10", "Membership Is Subscription", "Surname", "Is Voided", "Membership Paid Date")) %>%
+  select(-c("Association", "Email", "President Phone Number", "Co President Name", "Co President Email", "Co President Phone Number", "Vice President Name", "Vice President Email", "Vice President Phone Number", "Secretary Name", "Secretary Email", "Secretary Phone Number", "Treasurer Name", "Treasurer Email", "Treasurer Phone Number", "EdSA Representative Name", "EdSA Representative Email", "EdSA Representative Phone Number", "President Name", "President Email")) %>%
+  select(-c(Membership, "Contact Name", "What is your main Event/Conference for the year?", "What are the dates of this Event/Conference?", "When is your AGM due to be held?", "What term is your current President in?", "What are your membership renewal terms?", "Other - Please specify", "If yes, please specify", "If you are aware, what would be the % of your current members in each age group? Age group 18-25 in %", "Approximately, what is the % of your current members in the age group 26-35?", "Approximately, what is the % of your current members in the age group 36-45?", "Approximately, what is the % of your current members in the age group 46-55?", "Approximately, what is the % of your current members in the age group 55+?", "Would you like to be contacted regards the EdSA Gateway Membership Management system?")) %>%
+  select(-c(`Membership Number`, `Signup Time`))
 ```
 
 ```{r}
@@ -174,10 +208,52 @@ check_missing_gateway <- miss_var_summary(gateway)
 ```
 
 ```{r}
+# 统一名字
+gateway$asso_name[gateway$asso_name == "Association of Heads of Music in Non-Government Schools South Australia Inc."] <- "Association of Heads of Music in Non Government Schools South Australia Inc."
+gateway$asso_name[gateway$asso_name == "Australian Association of Special Education"] <- "Australian Association of Special Education (SA Chapter)"
+gateway$asso_name[gateway$asso_name == "Australian Association of Teachers of the Deaf (SA) Inc."] <- "Australian Association of Teachers of the Deaf (SA Branch)"
+gateway$asso_name[gateway$asso_name == "AUSTRALIAN NATIONAL CHORAL ASSOCIATION (ANCA) INCORPORATED trading as ANCA South Australia"] <- "Australian National Choral Association (SA Chapter)"
+gateway$asso_name[gateway$asso_name == "The Chinese Language Teachers Association SA (CLTASA)"] <- "The Chinese Language Teachers Association of South Australia Inc."
+gateway$asso_name[gateway$asso_name == "HaSS Association Australia"] <- "HaSS Association Australia (HAA)"
+gateway$asso_name[gateway$asso_name == "History Teachers Association of South Australia"] <- "History Teachers' Association of SA"
+gateway$asso_name[gateway$asso_name == "Indonesian Teachers' Association"] <- "Indonesian Teachers' Association Inc."
+gateway$asso_name[gateway$asso_name == "Japanese Language Teachers' Association of South Australia Incorporated"] <- "Japanese Language Teachers' Association of South Australia"
+gateway$asso_name[gateway$asso_name == "Kodaly Music Education Institute of Australia"] <- "Kodaly Music Education Institute of Australian, SA Branch"
+gateway$asso_name[gateway$asso_name == "The Chinese Language Teachers Association SA (CLTASA)"] <- "The Chinese Language Teachers Association of South Australia Inc."
+gateway$asso_name[gateway$asso_name == "Australian Association of Special Education"] <- "Australian Association of Special Education (SA Chapter)"
+gateway$asso_name[gateway$asso_name == "OSHC SA"] <- "Out of Hours School Care SA"
+wave$asso_name[wave$asso_name == "Language Teachers SA - MLTASA"] <- "Modern Language Teachers Association of South Australia"
+gateway$asso_name[gateway$asso_name == "Home Economics Institute of Australia- South Australian Division"] <- "Home Economics Institute of Australia Inc"
+gateway$asso_name[gateway$asso_name == "AUSTRALIAN DANCE COUNCIL AUSDANCE SA INC"] <- "Ausdance SA - Australian Dance Council"
+gateway$asso_name[gateway$asso_name == "Australian Council of Educational Leaders (SA Branch)"] <- "Australian Council for Educational Leaders"
+gateway$asso_name[gateway$asso_name == "Spanish Teachers' Association of South Australia"] <- "Spanish Teachers' Association of SA"
+gateway$asso_name[gateway$asso_name == "Australian Band and Orchestra Directors Association (South Australia)"] <- "Australian Band and Orchestra Directors Association"
+gateway$asso_name[gateway$asso_name == "Australian Psychologists and Counsellors in Schools SA"] <- "Australian Psychologists and Counsellors in Schools Association - South Australia"
+wave$asso_name[wave$asso_name == "SA HALT Network"] <- "SA Highly Accomplished Lead Teachers Network"
+wave$acronym[wave$asso_name == "SA Highly Accomplished Lead Teachers Network"] <- "SA HALT Network"
+gateway$asso_name[gateway$asso_name == "South Australian association for Teaching English to Speakers of Other Languages Inc"] <- "South Australian Association for Teaching English to Speakers of Other Languages Inc"
+gateway$asso_name[gateway$asso_name == "SA Special Education Principals & Leaders Association"] <- "South Australian Special Education Principals and Leaders Association"
+gateway$asso_name[gateway$asso_name == "Outdoor Education Association of South Australia"] <- "Outdoor Educators' Association of South Australia"
+gateway$asso_name[gateway$asso_name == "Orff Schulwerk Association of SA Inc"] <- "Orff Schulwerk Association of SA"
+gateway$asso_name[gateway$asso_name == "The Laboratory Managers Association of SA. Inc"] <- "Laboratory Managers Association of South Australia"
+gateway$asso_name[gateway$asso_name == "Geography Teachers Association of South Australia"] <- "Geography Teachers Association of SA"
+gateway$asso_name[gateway$asso_name == "BETA SA Inc"] <- "Business and Enterprise Teachers Association of South Australia"
+gateway$asso_name[gateway$asso_name == "Australia Society for Music Education SA Chapter"] <- "Australian Society for Music Education SA Chapter"
+gateway$asso_name[gateway$asso_name == "Early Childhood Australia: South Australia Committee"] <- "Early Childhood Australia SA Branch"
+gateway$asso_name[gateway$asso_name == "Early Childhood Association"] <- "Early Childhood Organisation"
+gateway$asso_name[gateway$asso_name == "Early Childhood Australia: South Australia Committee"] <- "Early Childhood Australia SA Branch"
+
+
+gateway$asso_name[gateway$asso_name == "Early Childhood Association"] <- "Early Childhood Organisation"
+```
+
+```{r}
 new_member <- anti_join(wave, gateway, by = "asso_name")
 leave_member <- anti_join(gateway, wave, by = "asso_name")
 common_member <- inner_join(gateway, wave, by = "asso_name", suffix = c("_gateway", "_wave"))
 ```
+
+
 
 ##会员规模
 
@@ -350,8 +426,6 @@ compare_early_career %>%
 
 与gateway平台的数据相比，wave数据中的“0-10”占比明显下降。
 
-
-
 ```{r}
 gateway |>
   mutate(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?` = factor(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?`, levels = c("Yes", "No"))) %>%
@@ -392,7 +466,6 @@ compare_discount %>%
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
   labs(y = "Count",title = "")
 ```
-
 
 ```{r}
 gateway_tab <- table(
@@ -437,11 +510,11 @@ LLM_wave_pre <- wave %>%
   mutate(serial_num = row_number()) %>%
   select("serial_num", "Do you offer any services targeted specifically at Pre-Service educators?", "Do you offer any services targeted specifically at Early Career Educators?")
 
-write.csv(LLM_wave_pre, "LLM_wave_pre.csv")
+write.csv(LLM_wave_pre, "data/LLM_wave_pre.csv")
 ```
 
 ```{r}
-LLM_wave_pre_classified <- read_csv("LLM_wave_pre_classified.csv") %>%
+LLM_wave_pre_classified <- read_csv("data/LLM_wave_pre_classified.csv") %>%
   select(-"Unnamed: 0")
 ```
 
@@ -516,11 +589,11 @@ LLM_wave_eve <- wave %>%
   mutate(serial_num = row_number()) %>%
   select("How many professional learning events does your Association run each year?", "What type of events are they?", "What locations are you using to run your events?", "Who are your target Members?", "What are your Member categories?", "How do you advertise for Members?")
 
-write.csv(LLM_wave_eve, "LLM_wave_eve.csv")
+write.csv(LLM_wave_eve, "data/LLM_wave_eve.csv")
 ```
 
 ```{r}
-LLM_wave_eve_classified <- read_csv("LLM_wave_eve_classified.csv")
+LLM_wave_eve_classified <- read_csv("data/LLM_wave_eve_classified.csv")
 ```
 
 ```{r}
@@ -632,18 +705,15 @@ LLM_wave_eve_classified |>
 
 ```{r}
 # LLM
-
 LLM_wave_rest <- wave %>%
   mutate(serial_num = row_number()) %>%
   select("What kinds of resources/publications do you provide?", "What is your biggest advocacy issue for 2025?", "What are the biggest threats to your Association in 2025?", "What does your Association hope to contribute as an organisation to Educators SA?", "What do you hope to get from being a member of Educators SA?")
 
-write.csv(LLM_wave_rest, "LLM_wave_rest.csv")
+write.csv(LLM_wave_rest, "data/LLM_wave_rest.csv")
 ```
 
-"What services does your Association offer?" "Does your association offer “Consultancy services” to sites or individuals?"
-
 ```{r}
-LLM_wave_rest_classified <- read_csv("LLM_wave_rest_classified.csv")
+LLM_wave_rest_classified <- read_csv("data/LLM_wave_rest_classified.csv")
 ```
 
 ### Service
@@ -759,11 +829,11 @@ LLM_wave_compare <- wave %>%
   mutate(serial_num = row_number()) %>%
   select("What is your biggest advocacy issue for 2025?", "What are the biggest threats to your Association in 2025?", "What does your Association hope to contribute as an organisation to Educators SA?", "What do you hope to get from being a member of Educators SA?")
 
-write.csv(LLM_wave_compare, "LLM_wave_compare.csv")
+write.csv(LLM_wave_compare, "data/LLM_wave_compare.csv")
 ```
 
 ```{r}
-LLM_wave_compare_classified <- read_csv("LLM_wave_compare_classified.csv")
+LLM_wave_compare_classified <- read_csv("data/LLM_wave_compare_classified.csv")
 ```
 
 ```{r}
@@ -793,8 +863,7 @@ compare_threat %>%
   labs(y = "Count",title = "")
 ```
 
-出现频率最高的类别为 Unsure（13次），表明部分协会尚未明确其主要倡议议题。除去该类别后，
-Unsure 同样是出现次数最多的类别（20次），明显高于其他所有类别。
+出现频率最高的类别为 Unsure（13次），表明部分协会尚未明确其主要倡议议题。除去该类别后， Unsure 同样是出现次数最多的类别（20次），明显高于其他所有类别。
 
 在 Advocacy Issue 方面，Subject/Program Sustainability & Quality（12次）是最受关注的议题，其次为 Access, Equity & Inclusion（9次）、Education Policy, Curriculum & Standards（9次）以及 Workforce & Staffing（8次）。这些结果反映出协会普遍关注教育质量、教育公平以及教师队伍建设等核心教育议题。
 
@@ -805,7 +874,7 @@ Unsure 同样是出现次数最多的类别（20次），明显高于其他所�
 Membership & Engagement 是最突出的组织风险。该类别在 Threats 中出现15次，但在 Advocacy Issues 中仅出现6次。这说明会员招募、会员留存及会员参与度是协会当前最普遍的挑战之一，但尚未被广泛视为需要对外倡议解决的问题，更可能属于内部管理和运营问题。
 
 Workforce & Staffing 同时是重要议题和重要威胁。该类别在 Advocacy Issues（8次）和 Threats Category（12次）中均排名靠前，显示教师和教育工作者的人力资源问题不仅影响协会自身运作，也被视为整个教育行业的重要挑战。这可能是未来跨协会合作和联合倡议的重要方向。
- 
+
 协会在倡议层面主要关注教育质量、公平与政策等行业发展议题，而在风险层面则更担忧会员参与度下降、人员配置不足及组织能力建设问题。
 
 ```{r}
