@@ -13,11 +13,21 @@ library(visdat)
 library(ggplot2)
 ```
 
-###New platform - WAVE
-
 ```{r}
 wave <- read_excel("D:/Desktop/EducatorSA/WAVE_Educators SA_members_8_5_2026.xlsx")
 ```
+
+```{r}
+gateway <- read_excel("D:/Desktop/EducatorSA/Gateway_exports_association_users_export.xlsx")
+```
+
+## Data Cleaning and Preparation
+
+在正式分析前，对 WAVE 和Gateway会员调查数据进行了系统的数据清理与预处理，以提高数据质量并保证后续分析结果的可靠性。经数据清理后，最终保留了67条Gateway的数据和61条WAVE平台的数据样本用于后续分析。为了研究新旧平台的部分变量差异，一张有59条数据的共同members的合并表被建立。
+
+### 数据筛选与变量整理
+
+首先，删除了不属于研究对象的记录，包括 Educators SA（EDSA）自身记录以及管理员的账号数据和测试数据。同时，移除了姓名、联系方式、账单信息、社交媒体链接等与研究问题无关的Personally Identifiable Information，以降低数据复杂度并保护隐私。 此外，对部分变量名称进行了标准化处理，以提高后续分析与代码可读性。
 
 ```{r}
 wave$`Start Date` <- as.Date(wave$`Start Date`, origin = "1899-12-30")
@@ -31,19 +41,45 @@ wave <- wave %>%
 wave <- wave %>%
   select(-c("First Name", "Last Name", "Position", "Email", "Mobile", "Address", "Suburb", "Billing Company", "Billing First name", "Billing Last name", "Billing Email", "ABN", "Package", "Duration", "Addon", "Note", "State", "Postcode", "Payment Method", "President Name", "President Email", "President Phone Number", "Vice President Name", "Vice President Email", "Vice President Phone Number", "Secretary Name", "Secretary Email", "Secretary Phone Number", "Treasurer Name", "Treasurer Email", "Treasurer Phone Number", "EdSA Representative Name", "EdSA Representative Email", "EdSA Representative Phone Number", "Website URL:", "Public facing email address:", "Phone number for public distribution (if available):", "Facebook:", "Instagram:", "Other - Please specify", "Co President Name", "Co President Email", "Co President Phone Number","LinkedIn:", "Twitter:", "Start Date", "Expiry Date","The Educators SA Association Newsletter is now our main method of communicating information to members. Are there any additional committee members who would like to be added to the distribution list? Please provide name and email addresses:")) %>%
   select(-c(ID, Type, "Tags", "Xero ID", "Membership Number")) %>%
-  select(-c("What term is your current President in?", "When is your AGM due to be held?", "Do you offer any discounted memberships to Early Career Educators?", "Does your Association have an Annual Conference?", "If so, which month?", "Do your Association ever host National Conferences?", "What are the dates of this Event/Conference?", "What is your main Event/Conference for the year?", "What are your membership renewal terms?", "If so, what year/ month is the next one scheduled to be in SA?" , "If you are aware, what would be the % of your current members in each age group? Age group 18-25 in %", "Approximately, what is the % of your current members in the age group 26-35?", "Approximately, what is the % of your current members in the age group 36-45?", "Approximately, what is the % of your current members in the age group 46-55?", "Approximately, what is the % of your current members in the age group 55+?", "If you offer any services targeted specifically at Pre-Service Educators, please specify:", "If you offer any services targeted specifically at Early Career Educators, please specify:"))
+  select(-c("What term is your current President in?", "When is your AGM due to be held?", "Does your Association have an Annual Conference?", "If so, which month?", "Do your Association ever host National Conferences?", "What are the dates of this Event/Conference?", "What is your main Event/Conference for the year?", "What are your membership renewal terms?", "If so, what year/ month is the next one scheduled to be in SA?", "If you offer any services targeted specifically at Pre-Service Educators, please specify:", "If you offer any services targeted specifically at Early Career Educators, please specify:", "If yes, please specify:", "If yes, please provide details:", "If yes, please specify"))
 ```
 
 ```{r}
 wave <- wave %>%
   rename(number_members_2025 = `How many Members did your Association have in 2025?`, 
          acronym = `Acronym Association`, 
-         # if_discount_new = `Do you offer a discounted membership to \"Early Careers\" or \"Pre-Service\"?`, 
          number_members_2024 = `How many Members did your Association have in 2024?`, 
          number_committee_members = `How many Committee Members do you have?`, 
          asso_name = `Company`
          )
 ```
+
+
+```{r}
+# 删除测试数据
+gateway <- gateway %>%
+  filter(!(`Contact Name` %in% "Please")) %>%
+  filter(!(Membership %in% "Admin")) %>%
+  rename(acronym = `Association Acronym`, 
+         asso_name = `Association Name`
+         ) 
+```
+
+```{r}
+gateway <- gateway %>%
+  select(-c("...10", "Membership Is Subscription", "Surname", "Is Voided", "Membership Paid Date")) %>%
+  select(-c("Association", "Email", "President Phone Number", "Co President Name", "Co President Email", "Co President Phone Number", "Vice President Name", "Vice President Email", "Vice President Phone Number", "Secretary Name", "Secretary Email", "Secretary Phone Number", "Treasurer Name", "Treasurer Email", "Treasurer Phone Number", "EdSA Representative Name", "EdSA Representative Email", "EdSA Representative Phone Number", "President Name", "President Email")) %>%
+  select(-c(Membership, "Contact Name", "What is your main Event/Conference for the year?", "What are the dates of this Event/Conference?", "When is your AGM due to be held?", "What term is your current President in?", "What are your membership renewal terms?", "Other - Please specify", "If yes, please specify", "Would you like to be contacted regards the EdSA Gateway Membership Management system?")) %>%
+  select(-c(`Signup Time`))
+```
+
+### 数据修正与格式调整
+
+调查问卷中部分协会以自由文本形式填写会员人数，例如："Approx 200", "Around 340 members", 把他们调整为数字格式方便后续研究。对于无法确定具体人数的回答，如 “Not sure”、“Can’t log in to check” 等，统一视为缺失值。完成清理后，将相关变量转换为numeric格式，确保能够用于统计分析。
+
+对于会员规模和 Early Career 会员数量等区间型变量，设定为ordered categories，确保后续交叉分析和可视化时类别顺序保持一致。同时，对于缺失的分类回答，以 “unsure” 进行标记。
+
+由于系统原因，部分账户存在duplicate问题（同一个member的active账户和inactive账户），优先保留较新的记录作为主记录，当新记录中部分字段缺失而旧记录存在有效信息时，使用旧记录补充相关内容，对重复数据进行了删除。该处理方式能够最大程度保留信息，同时避免重复统计。
 
 ```{r}
 wave[wave$number_members_2025 %in% "216 SA individual, student and institution", "number_members_2025"] <- "216"
@@ -87,6 +123,111 @@ wave[wave$number_committee_members %in% "6 general committee members", "number_c
 wave <- wave %>%
   mutate(number_committee_members = as.numeric(number_committee_members))
 ```
+
+```{r}
+gateway$`How many current financial members do you have?`[gateway$`How many current financial members do you have?` == "100"] <- "51-100"
+```
+
+```{r}
+# 检查重复
+gateway |>
+  filter(duplicated(gateway$acronym) == TRUE)
+
+```
+
+```{r}
+# 删除重复
+gateway <- gateway %>%
+  filter(!(asso_name == "Modern Language Teachers Association of South Australia" & `Membership Number` == "EdSA1648")) %>%
+  filter(!(asso_name == "The Laboratory Managers Association of SA")) %>%
+  filter(!(asso_name == "Legal Education Teachers Association of South Australia")) %>%
+  filter(!(asso_name == "South Australian German Teachers Association" & `Membership Number` == "EdSA1031")) %>%
+  filter(!(asso_name == "History Teachers Association of South Australia" & `Membership Number` == "EdSA2737")) %>%
+  filter(!(asso_name == "South Australian Council for Adult Literacy, Inc." & `Membership Number` == "EdSA2740")) %>%
+  filter(!(asso_name == "Geography Teachers Association of SA" & `Membership Number` == "EdSA1073")) %>%
+  filter(!(asso_name == "Geography Teacher's Assocaition of South Australia" & `Membership Number` == "EdSA4555")) %>%
+  filter(!(asso_name == "Modern Greek Language Teachers Association of South Australia Inc")) %>%
+  filter(!(asso_name == "The Australian Council for Educational Leaders (SA Branch)")) %>%
+  filter(!(asso_name == "Out of School Hours Care (SA) Association Inc.")) 
+  
+  
+```
+
+```{r}
+gateway |>
+  filter(duplicated(gateway$acronym) == TRUE)
+```
+
+### 查看缺失值
+
+2024年the number of members有25%的缺失，while 2025年有17%
+
+```{r}
+wave |>
+  select(number_members_2024, number_members_2025) |>
+  vis_miss() + 
+  theme(axis.text.x = element_text(vjust = 0.2))
+```
+
+关于associations年龄的分布，both在gateway和wave平台都有超过约80%的associations没有回答年龄分布相关问题，可以理解为绝大部分associations不了解他们的members的年龄分布。由于有效数据过少，本次分析将不会包含会员年龄结构的相关分析。
+
+```{r}
+gateway |>
+  rename("18-25" = "If you are aware, what would be the % of your current members in each age group? Age group 18-25 in %", 
+         "26-35" = "Approximately, what is the % of your current members in the age group 26-35?", 
+         "36-45" = "Approximately, what is the % of your current members in the age group 36-45?", 
+         "46-55" = "Approximately, what is the % of your current members in the age group 46-55?", 
+         "55+" = "Approximately, what is the % of your current members in the age group 55+?") |>
+  select("18-25", "26-35", "36-45", "46-55", "55+") |>
+  vis_miss() + 
+  theme(axis.text.x = element_text(vjust = 0.2))
+
+```
+
+```{r}
+wave |>
+  rename("18-25" = "If you are aware, what would be the % of your current members in each age group? Age group 18-25 in %", 
+         "26-35" = "Approximately, what is the % of your current members in the age group 26-35?", 
+         "36-45" = "Approximately, what is the % of your current members in the age group 36-45?", 
+         "46-55" = "Approximately, what is the % of your current members in the age group 46-55?", 
+         "55+" = "Approximately, what is the % of your current members in the age group 55+?") |>
+  select("18-25", "26-35", "36-45", "46-55", "55+") |>
+  vis_miss() + 
+  theme(axis.text.x = element_text(vjust = 0.2))
+```
+
+
+```{r}
+wave <- wave |>
+  select(-c("If you are aware, what would be the % of your current members in each age group? Age group 18-25 in %", "Approximately, what is the % of your current members in the age group 26-35?", "Approximately, what is the % of your current members in the age group 36-45?", "Approximately, what is the % of your current members in the age group 46-55?", "Approximately, what is the % of your current members in the age group 55+?"))
+```
+
+在其余的问题中，“What is your biggest advocacy issue for 2025?”，“What are the biggest threats to your Association in 2025?” 有约35%的缺失。“What kinds of resources/publications do you provide?”，“How many current financial members do you have?”，“How many 'Early Career' or 'Pre Service' members do you have?”，“What are your membership predictions for 2025 and why?”，“What services does your Association offer?”，“Who is your target audience?”这些问题也有较高的缺失率，约25%。
+
+部分问题存在较高比例的缺失值，尤其集中在会员统计、未来规划及协会定位等方面。这可能反映协会之间在信息记录方式、组织知识管理及战略规划成熟度方面存在差异。由于部分成员协会可能规模较小，这些缺失未必意味着数据不存在，而可能反映相关信息尚未被系统记录或集中保存。未来 Educators SA 可考虑提供自愿使用的数据收集模板、会员管理资源或经验分享机会，以支持协会提升信息管理的一致性和可获取性。
+
+```{r}
+check_missing_wave <- wave |>
+  select(-c(asso_name, Status, acronym, number_members_2024, number_members_2025, Industry)) |>
+  miss_var_summary()
+
+check_missing_wave
+```
+
+
+```{r}
+check_missing_gateway <- gateway |>
+  select(-c(asso_name, acronym)) |>
+  miss_var_summary()
+
+check_missing_gateway
+```
+
+### 缺失值填补
+
+会员人数是本项目的重要分析指标，但存在一定比例的缺失。2024 年会员人数约有 25% 缺失 while 2025 年会员人数约有 17.2% 缺失。
+
+为减少信息损失，采用分层填补策略。若某协会仅缺失 2024 年数据，则使用其 2025 年数据填补。若仅缺失 2025 年数据，则使用其 2024 年数据填补。若两年数据均缺失，则使用对应年份会员人数的中位数进行填补。由于会员人数分布存在较大的离群值，因此选择中位数而非均值进行填补，以降低极端值对结果的影响。
 
 ```{r}
 wave$`How many 'Early Career' or 'Pre Service' members do you have?`[is.na(wave$`How many 'Early Career' or 'Pre Service' members do you have?`)] <- "unsure"
@@ -141,71 +282,9 @@ wave_filled <- wave %>%
 
 ```
 
-###Old platform - Gateway
+### 人工校验与修正
 
-```{r}
-gateway <- read_excel("D:/Desktop/EducatorSA/Gateway_exports_association_users_export.xlsx")
-```
-
-```{r}
-# 删除测试数据
-gateway <- gateway %>%
-  filter(!(`Contact Name` %in% "Please")) %>%
-  filter(!(Membership %in% "Admin")) %>%
-  rename(acronym = `Association Acronym`, 
-         asso_name = `Association Name`
-         ) 
-```
-
-```{r}
-gateway$`How many current financial members do you have?`[gateway$`How many current financial members do you have?` == "100"] <- "51-100"
-```
-
-```{r}
-# 检查重复
-gateway |>
-  filter(duplicated(gateway$acronym) == TRUE)
-
-```
-
-```{r}
-# 删除重复
-gateway <- gateway %>%
-  filter(!(asso_name == "Modern Language Teachers Association of South Australia" & `Membership Number` == "EdSA1648")) %>%
-  filter(!(asso_name == "The Laboratory Managers Association of SA")) %>%
-  filter(!(asso_name == "Legal Education Teachers Association of South Australia")) %>%
-  filter(!(asso_name == "South Australian German Teachers Association" & `Membership Number` == "EdSA1031")) %>%
-  filter(!(asso_name == "History Teachers Association of South Australia" & `Membership Number` == "EdSA2737")) %>%
-  filter(!(asso_name == "South Australian Council for Adult Literacy, Inc." & `Membership Number` == "EdSA2740")) %>%
-  filter(!(asso_name == "Geography Teachers Association of SA" & `Membership Number` == "EdSA1073")) %>%
-  filter(!(asso_name == "Geography Teacher's Assocaition of South Australia" & `Membership Number` == "EdSA4555")) %>%
-  filter(!(asso_name == "Modern Greek Language Teachers Association of South Australia Inc")) %>%
-  filter(!(asso_name == "The Australian Council for Educational Leaders (SA Branch)")) %>%
-  filter(!(asso_name == "Out of School Hours Care (SA) Association Inc.")) 
-  
-  
-```
-
-```{r}
-gateway |>
-  filter(duplicated(gateway$acronym) == TRUE)
-```
-
-```{r}
-gateway <- gateway %>%
-  select(-c("...10", "Membership Is Subscription", "Surname", "Is Voided", "Membership Paid Date")) %>%
-  select(-c("Association", "Email", "President Phone Number", "Co President Name", "Co President Email", "Co President Phone Number", "Vice President Name", "Vice President Email", "Vice President Phone Number", "Secretary Name", "Secretary Email", "Secretary Phone Number", "Treasurer Name", "Treasurer Email", "Treasurer Phone Number", "EdSA Representative Name", "EdSA Representative Email", "EdSA Representative Phone Number", "President Name", "President Email")) %>%
-  select(-c(Membership, "Contact Name", "What is your main Event/Conference for the year?", "What are the dates of this Event/Conference?", "When is your AGM due to be held?", "What term is your current President in?", "What are your membership renewal terms?", "Other - Please specify", "If yes, please specify", "If you are aware, what would be the % of your current members in each age group? Age group 18-25 in %", "Approximately, what is the % of your current members in the age group 26-35?", "Approximately, what is the % of your current members in the age group 36-45?", "Approximately, what is the % of your current members in the age group 46-55?", "Approximately, what is the % of your current members in the age group 55+?", "Would you like to be contacted regards the EdSA Gateway Membership Management system?")) %>%
-  select(-c(`Membership Number`, `Signup Time`))
-```
-
-```{r}
-glimpse(gateway)
-```
-
-```{r}
-check_missing_gateway <- miss_var_summary(gateway)
-```
+部分公司在Gateway平台与WAVE平台的名字输入有小的不同，导致在合并表格时无法成功合并，所以人工将两张表格中同一家association的名字统一。
 
 ```{r}
 # 统一名字
@@ -253,7 +332,19 @@ leave_member <- anti_join(gateway, wave, by = "asso_name")
 common_member <- inner_join(gateway, wave, by = "asso_name", suffix = c("_gateway", "_wave"))
 ```
 
+```{r}
+new_member |>
+  select(asso_name)
+```
 
+```{r}
+leave_member |>
+  select(asso_name)
+```
+
+通过对比新旧平台数据，有四个新的associations加入EducatorSA。共有八家associations在WAVE平台没有数据，其中ACHPER (SA)仍然是active member只是没有在新平台注册，while 其他七家企业可以被认为是leave member。
+
+总结，WAVE平台相较于Gateway平台survey的问题更全面，但是也有更多的缺失数据，这可能也与WAVE是新平台有关。
 
 ##会员规模
 
@@ -403,6 +494,7 @@ compare_early_career %>%
 虽然数量不多，但仍有部分协会拥有 31–50 或 51–100 名 Early Career 会员，说明某些协会已经建立了较成熟的 Early Career 参与机制。这些协会的做法值得进一步研究和推广。
 
 WAVE 平台中约三分之一的协会无法明确提供 Early Career 会员数量（18个 Unsure），高于 Gateway 平台。这可能影响后续对青年会员参与情况的准确评估，也提示协会需要加强会员分类统计和记录管理。
+
 ```{r}
 # 不用了
 # 一起的 - 经决定不用了
@@ -430,7 +522,6 @@ compare_early_career %>%
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
   labs(y = "Count",title = "")
 ```
-
 
 ```{r}
 compare_early_career_discount <- bind_rows(
@@ -894,6 +985,32 @@ compare_contribute %>%
 
 #Advice
 
-建议将调查客户详细地址改成询问active的地区（州/城市） "Do you offer any discounted memberships to Early Career Educators?"和 "Do you offer a discounted membership to "Early Careers" or "Pre-Service"?"问题重复 "What are your Member categories?"问题表述不清晰，比如有些人回答unsure what categories you mean "What locations are you using to run your events?"问题太笼统，有些写的类似school的地点，而有些写的是城市 2.是否给学前教育提供帮助，问题重复了
+## 问题的建议
 
-部分问题不清楚，比如members的categories，有人回答不清楚categories意味着什么，可以使用i.e.
+年龄结构80%缺失，五个百分比字段太琐碎，多数协会根本不掌握这个数据，可以选择直接砍掉或者改成极简的单选"哪个年龄段的会员最多"
+
+活动频率：部分协会用"up to 8"这种模糊表述，需要人工改成区间，改成分区间单选题，而不是让协会自己填数字或描述
+
+建议将调查客户详细地址改成询问active的地区（州/城市），方便组织活动，可以帮助同城市组织之间的合作交流。
+
+"Do you offer any discounted memberships to Early Career Educators?"和 "Do you offer a discounted membership to "Early Careers" or "Pre-Service"?"问题重复 
+
+"What are your Member categories?"问题表述不清晰，比如有些人回答unsure what categories you mean "What locations are you using to run your events?"问题太笼统，有些写的类似school的地点，而有些写的是城市。（鉴于EducatorSA的会员都相对比较稳定，可以在填写问卷时提供一些帮助，或者事后问询。）
+
+2.是否给学前教育提供帮助，问题重复了
+
+部分问题不清楚，比如members的categories，有人回答不清楚categories意味着什么，可以使用i.e.进行具体描述
+
+由于组织们对组织间协作交流的需求，可以统计组织希望交流的领域（比如数学、艺术等）作为多选题，方便以后组织多个association的活动。
+
+
+
+## 可能缺失的数据集
+
+持久化的组织唯一标识符是目前最大的结构性缺口。协会名称在Gateway和WAVE两个平台上拼写不统一，导致合并全靠人工核对。应该有一个不随平台迁移、不随改名而变的Association ID，name变更只作为一个可编辑的显示字段。
+
+留存率/续费率数据——现在只统计"当年会员数"，但完全没有"多少人续费、多少人流失"。这对判断"Membership & Engagement"这个头号威胁至关重要——协会说会员参与度在下滑，但没有数据能证明这一点，只能看总数的净变化。建议增加"上一年到期会员中，续费的比例"这一简单字段。
+
+由于组织形式不同，有的组织面向个人，有的组织面向团体，有的都有。建议可以拆成：个人会员 / 机构或学校会员 两类分别计数。
+
+现有的形式不方便了解年度的变化，每年更新数据？
