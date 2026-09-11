@@ -54,7 +54,6 @@ wave <- wave %>%
          )
 ```
 
-
 ```{r}
 # 删除测试数据
 gateway <- gateway %>%
@@ -196,7 +195,6 @@ wave |>
   theme(axis.text.x = element_text(vjust = 0.2))
 ```
 
-
 ```{r}
 wave <- wave |>
   select(-c("If you are aware, what would be the % of your current members in each age group? Age group 18-25 in %", "Approximately, what is the % of your current members in the age group 26-35?", "Approximately, what is the % of your current members in the age group 36-45?", "Approximately, what is the % of your current members in the age group 46-55?", "Approximately, what is the % of your current members in the age group 55+?"))
@@ -213,7 +211,6 @@ check_missing_wave <- wave |>
 
 check_missing_wave
 ```
-
 
 ```{r}
 check_missing_gateway <- gateway |>
@@ -360,10 +357,6 @@ wave |>
 ```
 
 通过bar chart可以发现大部分的associations的付费会员人数在100人以内而大约有十家association的付费会员超过200。According to the data, most of the associations 超过半数会员都是付费会员。Among the data set有两个异常值，which 2025年会员人数在100人以下却选择了“200+”的付费会员人数，这可能是错误的数据。
-
-```{r}
-sum(wave$`How many current financial members do you have?`)
-```
 
 ```{r}
 gateway |>
@@ -733,6 +726,162 @@ LLM_wave_eve_classified |>
 
 It is obvivous school是举办活动最常用的地方，其他常用的地方有Community / Public / Special venues和Education / Training centres。Hotels / Conference venues和Universities / TAFE也多次被提及。Online活动占所有被提及的次数只有9次，占整体的9%。
 
+```{r}
+# 尝试
+event_type_count <- LLM_wave_eve_classified |>
+  separate_rows(`Classification - Event Types`, sep = "; ") |>
+  filter(`Classification - Event Types` != "Unsure") |>
+  count(`Classification - Event Types`) |>
+  mutate(
+    pct = n / sum(n) * 100
+  )
+ggplot(event_type_count,
+       aes(x = reorder(`Classification - Event Types`, n),
+           y = pct)) +
+  geom_col() +
+  coord_flip()
+```
+
+```{r}
+event_diversity <- LLM_wave_eve_classified |>
+  mutate(
+    n_event_types =
+      str_count(`Classification - Event Types`, ";") + 1
+  )
+
+ggplot(event_diversity,
+       aes(x = n_event_types)) +
+  geom_bar()
+```
+
+```{r}
+event_diversity <- LLM_wave_eve_classified |>
+  mutate(
+    n_event_types =
+      str_count(`Classification - Event Types`, ";") + 1
+  ) |>
+  count(n_event_types) |>
+  mutate(
+    pct = round(n / sum(n) * 100, 1)
+  )
+```
+
+在61个组织样本中，举办一种活动类型的最多占44.3%，在有多种活动types的associations中，三种的占比最高有29.5%，而四种的仅有6.6%。
+
+```{r}
+event_type_by_diversity <- LLM_wave_eve_classified |>
+  mutate(
+    n_event_types =
+      str_count(`Classification - Event Types`, ";") + 1
+  ) |>
+  separate_rows(`Classification - Event Types`, sep = "; ") |>
+  filter(`Classification - Event Types` != "Unsure") |>
+  count(
+    n_event_types,
+    `Classification - Event Types`
+  ) |>
+  group_by(n_event_types) |>
+  mutate(
+    pct = n / sum(n) * 100
+  )
+
+ggplot(
+  event_type_by_diversity,
+  aes(
+    x = factor(n_event_types),
+    y = pct,
+    fill = `Classification - Event Types`
+  )
+) +
+  geom_col() +
+  labs(
+    x = "Number of Event Types Offered",
+    y = "Percentage"
+  )
+```
+Professional learning / Workshops和conferences 是大多数协会的核心活动形式，也是许多协会唯一提供的活动类型。
+
+小型或资源有限的协会往往聚焦于专业学习活动，活动更丰富的协会则采用更加多元化的会员参与方式。活动种类越丰富的协会：
+
+越倾向于提供交流、社群建设和会员互动活动。
+
+这可能说明：
+
+* 成熟协会不仅提供专业发展内容；
+* 也更加重视会员之间的联系与社区建设。
+
+提供4种活动的协会中：
+
+Online / Hybrid events 已成为重要组成部分。
+
+这可能反映：
+
+* 较成熟协会具有更强的数字化能力；
+* 更容易覆盖区域会员；
+* 能够突破线下活动限制。
+
+对于未来调查问卷来说，可以进一步收集：
+
+* Online attendance
+* Hybrid participation
+* Virtual engagement
+
+4. Presentations / Seminars 几乎只出现在活动较丰富的协会中
+
+可以看到：
+
+* 1种活动几乎没有
+* 2种活动约4%
+* 3种活动约13%
+* 4种活动约12%
+
+Insight
+
+Presentation/Seminar 更像是：
+
+在基础培训活动之外的补充性活动。
+
+说明协会达到一定规模后，才会开展更细分、更专题化的知识分享活动。These proportions should be interpreted alongside the number of associations in each event-diversity group.
+
+assciations会举办Competition和Presentation活动作为拓展来丰富活动类型。
+
+#### Frenqucy*diversity
+
+```{r}
+event_type_by_frequency <- LLM_wave_eve_classified |>
+  separate_rows(`Classification - Event Types`, sep = "; ") |>
+  filter(`Classification - Event Types` != "Unsure") |>
+  filter(`Classification - Event Types` != "Other") |>
+  count(
+    `Classification - Professional Learning Event Frequency`,
+    `Classification - Event Types`
+  ) |>
+  group_by(`Classification - Professional Learning Event Frequency`) |>
+  mutate(
+    pct = n / sum(n) * 100
+  ) |>
+  ungroup() |>
+  mutate(`Classification - Professional Learning Event Frequency` = factor(`Classification - Professional Learning Event Frequency`, levels = c("1", "2", "2-5", "5-10", "10-20", ">20", "Other"))) |>
+  filter(!(`Classification - Professional Learning Event Frequency` == "Other")) 
+
+ggplot(
+  event_type_by_frequency,
+  aes(
+    x = `Classification - Professional Learning Event Frequency`,
+    y = pct,
+    fill = `Classification - Event Types`
+  )
+) +
+  geom_col() +
+  labs(
+    x = "Professional Learning Event Frequency",
+    y = "Percentage"
+  )
+
+```
+
+更高频次的assciation更会有online events
+
 ##广告受众
 
 ```{r}
@@ -941,7 +1090,7 @@ compare_threat %>%
   geom_col(position = "dodge") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
-  labs(y = "Count",title = "")
+  labs(y = "Count",title = "Advocacy Issue vs Threats Category")
 ```
 
 出现频率最高的类别为 Unsure（13次），表明部分协会尚未明确其主要倡议议题。除去该类别后， Unsure 同样是出现次数最多的类别（20次），明显高于其他所有类别。
@@ -993,7 +1142,7 @@ compare_contribute %>%
 
 建议将调查客户详细地址改成询问active的地区（州/城市），方便组织活动，可以帮助同城市组织之间的合作交流。
 
-"Do you offer any discounted memberships to Early Career Educators?"和 "Do you offer a discounted membership to "Early Careers" or "Pre-Service"?"问题重复 
+"Do you offer any discounted memberships to Early Career Educators?"和 "Do you offer a discounted membership to "Early Careers" or "Pre-Service"?"问题重复
 
 "What are your Member categories?"问题表述不清晰，比如有些人回答unsure what categories you mean "What locations are you using to run your events?"问题太笼统，有些写的类似school的地点，而有些写的是城市。（鉴于EducatorSA的会员都相对比较稳定，可以在填写问卷时提供一些帮助，或者事后问询。）
 
@@ -1003,7 +1152,7 @@ compare_contribute %>%
 
 由于组织们对组织间协作交流的需求，可以统计组织希望交流的领域（比如数学、艺术等）作为多选题，方便以后组织多个association的活动。
 
-
+组织在哪个 industry
 
 ## 可能缺失的数据集
 
