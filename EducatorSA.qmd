@@ -799,53 +799,16 @@ ggplot(
     y = "Percentage"
   )
 ```
+
 Professional learning / Workshops和conferences 是大多数协会的核心活动形式，也是许多协会唯一提供的活动类型。
 
-小型或资源有限的协会往往聚焦于专业学习活动，活动更丰富的协会则采用更加多元化的会员参与方式。活动种类越丰富的协会：
+小型或资源有限的协会往往聚焦于专业学习活动，活动更丰富的协会则采用更加多元化的会员参与方式。活动种类越丰富的协会越倾向于提供交流、社群建设和会员互动活动。这可能说明成熟协会不仅提供专业发展内容，也更加重视会员之间的联系与社区建设。
 
-越倾向于提供交流、社群建设和会员互动活动。
+提供4种活动的协会中Online / Hybrid events 已成为重要组成部分。线上活动更容易覆盖不同区域的会员，能够突破线下活动限制。
 
-这可能说明：
+Competition和Presentation 几乎只出现在活动较丰富的协会中，它属于基础培训活动之外的补充性活动，也说明了协会达到一定规模后，才会开展更细分、更专题化的知识分享活动，来丰富活动类型。
 
-* 成熟协会不仅提供专业发展内容；
-* 也更加重视会员之间的联系与社区建设。
-
-提供4种活动的协会中：
-
-Online / Hybrid events 已成为重要组成部分。
-
-这可能反映：
-
-* 较成熟协会具有更强的数字化能力；
-* 更容易覆盖区域会员；
-* 能够突破线下活动限制。
-
-对于未来调查问卷来说，可以进一步收集：
-
-* Online attendance
-* Hybrid participation
-* Virtual engagement
-
-4. Presentations / Seminars 几乎只出现在活动较丰富的协会中
-
-可以看到：
-
-* 1种活动几乎没有
-* 2种活动约4%
-* 3种活动约13%
-* 4种活动约12%
-
-Insight
-
-Presentation/Seminar 更像是：
-
-在基础培训活动之外的补充性活动。
-
-说明协会达到一定规模后，才会开展更细分、更专题化的知识分享活动。These proportions should be interpreted alongside the number of associations in each event-diversity group.
-
-assciations会举办Competition和Presentation活动作为拓展来丰富活动类型。
-
-#### Frenqucy*diversity
+#### Frenqucy\*diversity
 
 ```{r}
 event_type_by_frequency <- LLM_wave_eve_classified |>
@@ -880,7 +843,7 @@ ggplot(
 
 ```
 
-更高频次的assciation更会有online events
+
 
 ##广告受众
 
@@ -929,6 +892,177 @@ LLM_wave_eve_classified |>
 LLM_wave_eve_classified |>
   separate_rows(`Classification - Member Advertising`, sep = "; ") %>%
   count(`Classification - Member Advertising`)
+```
+
+```{r}
+wave_growth <- wave %>%
+  mutate(row_number = row_number()) %>%
+  select(row_number,`Was that an increase, decrease or stable number?`)
+
+LLM_wave_eve_classified <- LLM_wave_eve_classified %>%
+  mutate(row_number = row_number()) %>%
+  left_join(wave_growth, by = "row_number")
+```
+
+```{r}
+target_adv <- LLM_wave_eve_classified %>%
+  separate_rows(`Classification - Target Members`,
+                sep = "; ") %>%
+  separate_rows(`Classification - Member Advertising`,
+                sep = "; ")
+
+target_adv_count <- target_adv %>%
+  count(
+    `Classification - Target Members`,
+    `Classification - Member Advertising`
+  )
+
+ggplot(
+  target_adv_count,
+  aes(
+    x = `Classification - Member Advertising`,
+    y = `Classification - Target Members`,
+    fill = n
+  )
+) +
+  geom_tile() +
+  geom_text(aes(label = n), size = 3) +
+  scale_fill_gradient(low = "white", high = "steelblue") +
+  theme_minimal() +
+  theme(
+    axis.text.x =
+      element_text(angle = 60, hjust = 1)
+  ) + 
+labs(title = "Advertising Approaches by Target Member Groups", 
+     x ="Member Advertising" , y = "Target Members")
+
+```
+```{r}
+target_adv_pct <- target_adv %>%
+  count(
+    `Classification - Target Members`,
+    `Classification - Member Advertising`
+  ) %>%
+  group_by(`Classification - Target Members`) %>%
+  mutate(
+    pct = n / sum(n)
+  )
+
+ggplot(
+  target_adv_pct,
+  aes(
+    x = `Classification - Member Advertising`,
+    y = `Classification - Target Members`,
+    fill = pct
+  )
+) +
+  geom_tile() +
+  geom_text(
+    aes(label = scales::percent(pct, accuracy = 1))
+  ) +
+  scale_fill_gradient(
+    low = "white",
+    high = "steelblue"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x =
+      element_text(angle = 60, hjust = 1)
+  )
+
+```
+
+```{r}
+adv_growth <- LLM_wave_eve_classified %>%
+  separate_rows(
+    `Classification - Member Advertising`,
+    sep = "; "
+  )
+
+adv_growth_count <- adv_growth %>%
+  count(
+    `Was that an increase, decrease or stable number?`,
+    `Classification - Member Advertising`
+  )
+
+ggplot(
+  adv_growth_count,
+  aes(
+    x = `Was that an increase, decrease or stable number?`,
+    y = `Classification - Member Advertising`,
+    fill = n
+  )
+) +
+  geom_tile() +
+  geom_text(aes(label = n)) +
+  scale_fill_gradient(
+    low = "white",
+    high = "darkgreen"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+adv_growth_pct <- adv_growth %>%
+  count(
+    `Was that an increase, decrease or stable number?`,
+    `Classification - Member Advertising`
+  ) %>%
+  group_by(`Was that an increase, decrease or stable number?`) %>%
+  mutate(
+    pct = n / sum(n)
+  )
+
+ggplot(
+  adv_growth_pct,
+  aes(
+    x = `Was that an increase, decrease or stable number?`,
+    y = `Classification - Member Advertising`,
+    fill = pct
+  )
+) +
+  geom_tile() +
+  geom_text(
+    aes(
+      label =
+        scales::percent(
+          pct,
+          accuracy = 1
+        )
+    )
+  ) +
+  scale_fill_gradient(
+    low = "white",
+    high = "darkgreen"
+  ) +
+  theme_minimal()
+```
+```{r}
+adv_growth <- LLM_wave_eve_classified %>%
+  separate_rows(
+    `Classification - Member Advertising`,
+    sep = "; "
+  ) %>%
+  count(
+    `Was that an increase, decrease or stable number?`,
+    `Classification - Member Advertising`
+  )
+
+ggplot(
+  adv_growth,
+  aes(
+    x = `Classification - Member Advertising`,
+    y = n,
+    fill = `Was that an increase, decrease or stable number?`
+  )
+) +
+  geom_col(position = "fill") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_minimal() +
+  theme(
+    axis.text.x =
+      element_text(angle = 60, hjust = 1)
+  )
 ```
 
 # 和edsa的利害关系
