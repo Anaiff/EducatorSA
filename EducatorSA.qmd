@@ -489,34 +489,6 @@ compare_early_career %>%
 WAVE 平台中约三分之一的协会无法明确提供 Early Career 会员数量（18个 Unsure），高于 Gateway 平台。这可能影响后续对青年会员参与情况的准确评估，也提示协会需要加强会员分类统计和记录管理。
 
 ```{r}
-# 不用了
-# 一起的 - 经决定不用了
-# How many 'Early Career' or 'Pre Service' members do you have?
-compare_early_career <- bind_rows(
-  common_member %>%
-    select(`How many 'Early Career' or 'Pre Service' members do you have?_gateway`) %>%
-    mutate( Platform = "Gateway", 
-            `How many 'Early Career' or 'Pre Service' members do you have?` = `How many 'Early Career' or 'Pre Service' members do you have?_gateway`),
-
-  common_member %>%
-    select(`How many 'Early Career' or 'Pre Service' members do you have?_wave`) %>%
-    mutate( Platform = "WAVE", 
-            `How many 'Early Career' or 'Pre Service' members do you have?` = `How many 'Early Career' or 'Pre Service' members do you have?_wave`)
-  
-) %>%
-  count(`How many 'Early Career' or 'Pre Service' members do you have?`, Platform)
-
-compare_early_career %>%
-  mutate(`How many 'Early Career' or 'Pre Service' members do you have?` = fct_relevel(`How many 'Early Career' or 'Pre Service' members do you have?`, "Unsure", after = Inf)) %>%
-  mutate(`How many 'Early Career' or 'Pre Service' members do you have?` = factor(`How many 'Early Career' or 'Pre Service' members do you have?`, levels = c("0-10", "11-30", "31-50", "51-100", "100+", "unsure"))) %>%
-  ggplot(aes(x = `How many 'Early Career' or 'Pre Service' members do you have?`, y = n, fill = Platform)) +
-  geom_col(position = "dodge") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
-  labs(y = "Count",title = "")
-```
-
-```{r}
 compare_early_career_discount <- bind_rows(
   common_member %>%
     select(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?_gateway`) %>%
@@ -577,7 +549,7 @@ common_member %>%
 
 在两个数据集共同的33个会员中，有三家association(Modern Greek Language Teachers Association of South Australia) 曾经不为"Early Careers" 和 "Pre-Service"提供折扣而现在提供折扣。有两家association曾经对"Early Careers" 和 "Pre-Service"有折扣而现在不折扣
 
-```{r}
+```{r, eval=FALSE}
 # LLM
 
 LLM_wave_pre <- wave %>%
@@ -590,30 +562,6 @@ write.csv(LLM_wave_pre, "data/LLM_wave_pre.csv")
 ```{r}
 LLM_wave_pre_classified <- read_csv("data/LLM_wave_pre_classified.csv") %>%
   select(-"Unnamed: 0")
-```
-
-```{r}
-# 不用了，或许画饼图会更好？
-LLM_wave_pre_classified |>
-  separate_rows(`Pre-Service Educator Service Categories`, sep = ";") %>%
-  filter(`Pre-Service Educator Service Categories` != "No service reported") %>%
-  count(`Pre-Service Educator Service Categories`, sort = TRUE) %>%
-  ggplot(aes(x = `Pre-Service Educator Service Categories`, y = n)) + 
-  geom_col() + 
-  labs(title = "Pre-Service Educator Service Categories", x = "Service Categories", y = "Numbers") + 
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))
-```
-
-```{r}
-# 不用了
-LLM_wave_pre_classified |>
-  separate_rows(`Early Career Educator Service Categories`, sep = ";") %>%
-  filter(`Early Career Educator Service Categories` != "No service reported") %>%
-  count(`Early Career Educator Service Categories`, sort = TRUE) %>%
-  ggplot(aes(x = `Early Career Educator Service Categories`, y = n)) + 
-  geom_col() + 
-  labs(title = "Early Career Educator Service Categories", x = "Service Categories", y = "Numbers") + 
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))
 ```
 
 ```{r}
@@ -656,7 +604,7 @@ wave |>
 
 ##活动举办
 
-```{r}
+```{r, eval=FALSE}
 # LLM
 
 LLM_wave_eve <- wave %>%
@@ -679,36 +627,18 @@ LLM_wave_eve_classified$`Classification - Professional Learning Event Frequency`
 ```
 
 ```{r}
-# frequency
-LLM_wave_eve_classified <- LLM_wave_eve_classified %>%
-  mutate(`Classification - Professional Learning Event Frequency` = factor(`Classification - Professional Learning Event Frequency`, c("0", "1", "2-5", "5-10", "10-20", ">20")))
-
-LLM_wave_eve_classified %>%
-  ggplot(aes(x = `Classification - Professional Learning Event Frequency`)) + 
-  geom_bar()
-
-# LLM_wave_eve_classified |>
-#   separate_rows(`Classification - Professional Learning Event Frequency`, sep = "; ") %>%
-#   count(`Classification - Professional Learning Event Frequency`)
-```
-
-Professional Learning 活动的举办频率整体呈现出较为明显的集中趋势，大多数 Association 每年举办 2–5 场活动，约占全部 Association 的 72%。随着活动数量增加，Association 的比例逐渐下降：约 13% 每年举办 5–10 场，约 7% 举办 10–20 场，而每年举办超过 20 场的仅有 3 家（约 5%）。这表明大多数 Association 的 Professional Learning 活动维持在相对适中的频率，但同时存在少数活动举办频率明显较高的 Association，呈现出“小部分高频低频、大部分中等频率”的分布模式。
-
-```{r}
 LLM_wave_eve_classified |>
   separate_rows(`Classification - Event Types`, sep = "; ") %>%
   filter(`Classification - Event Types` != "Unsure") %>%
   mutate(`Classification - Event Types` = fct_relevel(`Classification - Event Types`, "Other", after = Inf)) %>%
   ggplot(aes(x = `Classification - Event Types`)) + 
   geom_bar() + 
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) + 
+  labs(title = "Distribution of Event Types by Classification", x = "Event Types", y = "Count")
 
-LLM_wave_eve_classified |>
-  separate_rows(`Classification - Event Types`, sep = "; ") %>%
-  count(`Classification - Event Types`)
 ```
 
-最常举办的活动形式是Professional learning / Workshops和Conferences。Online / Hybrid events占比很少，大约只占11%。除了常规的学习相关的活动，还有一些Networking / Community events活动和Competitions也会被举办。
+最常举办的活动形式是Professional learning / Workshops和Conferences。Online / Hybrid events占比很少，大约只占11%。除了常规的学习相关的活动，还有一些Networking / Community events活动和Competitions也会被举办。说明大部分组织组织的活动，不仅意在致力于提升教学技能能力，也把教师之间的互相交流学习作为主要目标之一。
 
 ```{r}
 LLM_wave_eve_classified |>
@@ -717,30 +647,15 @@ LLM_wave_eve_classified |>
   mutate(`Classification - Event Locations` = fct_relevel(`Classification - Event Locations`, "Other", after = Inf)) %>%
   ggplot(aes(x = `Classification - Event Locations`)) + 
   geom_bar() + 
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) + 
+  labs(title = "Distribution of Event Locations by Classification", x = "Event Locations", y = "Count")
 
-LLM_wave_eve_classified |>
-  separate_rows(`Classification - Event Locations`, sep = "; ") %>%
-  count(`Classification - Event Locations`)
 ```
 
-It is obvivous school是举办活动最常用的地方，其他常用的地方有Community / Public / Special venues和Education / Training centres。Hotels / Conference venues和Universities / TAFE也多次被提及。Online活动占所有被提及的次数只有9次，占整体的9%。
+这张柱状图展示了不同活动场所被提及的频次。It is obvivous school是举办活动最常用的地方，被提及超过30次。Universites作为高等教育机构也被提及9次。Community 等 Public 场所（15次）和Training centres（17次）等教育相关的场所也是比较常被选择的举办活动的场所。有九个associations也会选择conference Venues比如hotels。Online活动也有九次被提及。仅有一家协会提到他们会在他们的专用设施举办活动。
 
-```{r}
-# 尝试
-event_type_count <- LLM_wave_eve_classified |>
-  separate_rows(`Classification - Event Types`, sep = "; ") |>
-  filter(`Classification - Event Types` != "Unsure") |>
-  count(`Classification - Event Types`) |>
-  mutate(
-    pct = n / sum(n) * 100
-  )
-ggplot(event_type_count,
-       aes(x = reorder(`Classification - Event Types`, n),
-           y = pct)) +
-  geom_col() +
-  coord_flip()
-```
+assciations举办活动的地点是比较丰富的，学校、university等教育机构被认为是协会举办活动的首选，其次还有training centres，community和hotels等场所也是协会们常用的选择。有些协会会举办线上活动，但占比不多约11%。只有极少数协会有专门举办活动的facilities。
+
 
 ```{r}
 event_diversity <- LLM_wave_eve_classified |>
@@ -751,22 +666,11 @@ event_diversity <- LLM_wave_eve_classified |>
 
 ggplot(event_diversity,
        aes(x = n_event_types)) +
-  geom_bar()
+  geom_bar() + 
+  labs(title = "Number of Event Types per Association", x="Number of Event Types", y="Count of Associations")
 ```
 
-```{r}
-event_diversity <- LLM_wave_eve_classified |>
-  mutate(
-    n_event_types =
-      str_count(`Classification - Event Types`, ";") + 1
-  ) |>
-  count(n_event_types) |>
-  mutate(
-    pct = round(n / sum(n) * 100, 1)
-  )
-```
-
-在61个组织样本中，举办一种活动类型的最多占44.3%，在有多种活动types的associations中，三种的占比最高有29.5%，而四种的仅有6.6%。
+超过一半的协会（约27个）只举办1种类型的事件。这说明大部分协会的业务聚焦度极高，或者资源/能力有限，无法覆盖多种活动类型，但是也有一定可能是由于members在填写survey的时候只写了最常用的Event Type。2种类型的协会（约12个）反而少于3种类型的协会（约18个）。仍有较高比例的协会有比较丰富的活动类型，但是活动类型有四种的协会仅有不到五家，占6.6%。这说明高度多元化的协会非常稀缺，可能是受限于人力、资金或专业能力。
 
 ```{r}
 event_type_by_diversity <- LLM_wave_eve_classified |>
@@ -785,30 +689,19 @@ event_type_by_diversity <- LLM_wave_eve_classified |>
     pct = n / sum(n) * 100
   )
 
-ggplot(
-  event_type_by_diversity,
-  aes(
-    x = factor(n_event_types),
-    y = pct,
-    fill = `Classification - Event Types`
-  )
-) +
+ggplot(event_type_by_diversity,aes(x = factor(n_event_types),y = pct,fill = `Classification - Event Types`)) +
   geom_col() +
-  labs(
-    x = "Number of Event Types Offered",
-    y = "Percentage"
-  )
+  labs(x = "Number of Event Types", y = "Percentage", fill = "Event Types")
+
 ```
 
-Professional learning / Workshops和conferences 是大多数协会的核心活动形式，也是许多协会唯一提供的活动类型。
+这张图展示了不同活动丰富程度的协会组织不同event types的占比。在不同丰富度的协会中，Professional learning events都是他们举办活动最主要的部分。尤其是对于一种和两种events type的协会来说，占据了超过70%。
 
-小型或资源有限的协会往往聚焦于专业学习活动，活动更丰富的协会则采用更加多元化的会员参与方式。活动种类越丰富的协会越倾向于提供交流、社群建设和会员互动活动。这可能说明成熟协会不仅提供专业发展内容，也更加重视会员之间的联系与社区建设。
+而随着活动种类越来越丰富，Coummunity events逐渐成为了协会举办活动中的重要组成部分，从极低的占比（约3%）猛增到了约20%。说明当协会有余力增加更多种的活动时，首选是社交类活动，增强会员之间的联系与社区建设。
 
-提供4种活动的协会中Online / Hybrid events 已成为重要组成部分。线上活动更容易覆盖不同区域的会员，能够突破线下活动限制。
+当活动种类从2种再进一步丰富到三种和四种，Presentations/Seminars和Online/Hybird events的占比都有明显增加，成为了活动类型的重要组成部分之一。此外special events比如Competitions的占比也略有上涨，但仍然是占比最少的活动。随着活动越来越丰富，不同活动类型的占比也越来越均匀。综合上述发现，在活动多元化的协会中，在基础的教育和会议活动之外，一部分选择增加 Presentations/Seminars来深挖专业内容，另一部分选择增加 Online/Hybird events突破线下活动限制，扩大成员参与范围。
 
-Competition和Presentation 几乎只出现在活动较丰富的协会中，它属于基础培训活动之外的补充性活动，也说明了协会达到一定规模后，才会开展更细分、更专题化的知识分享活动，来丰富活动类型。
-
-#### Frenqucy\*diversity
+#### Frenqucy*diversity
 
 ```{r}
 event_type_by_frequency <- LLM_wave_eve_classified |>
@@ -824,24 +717,33 @@ event_type_by_frequency <- LLM_wave_eve_classified |>
     pct = n / sum(n) * 100
   ) |>
   ungroup() |>
-  mutate(`Classification - Professional Learning Event Frequency` = factor(`Classification - Professional Learning Event Frequency`, levels = c("1", "2", "2-5", "5-10", "10-20", ">20", "Other"))) |>
+  mutate(`Classification - Professional Learning Event Frequency` = factor(`Classification - Professional Learning Event Frequency`, levels = c("1", "2-5", "5-10", "10-20", ">20", "Other"))) |>
   filter(!(`Classification - Professional Learning Event Frequency` == "Other")) 
 
-ggplot(
-  event_type_by_frequency,
-  aes(
-    x = `Classification - Professional Learning Event Frequency`,
-    y = pct,
-    fill = `Classification - Event Types`
-  )
-) +
-  geom_col() +
-  labs(
-    x = "Professional Learning Event Frequency",
-    y = "Percentage"
-  )
-
+ggplot(event_type_by_frequency,aes(x = `Classification - Professional Learning Event Frequency`, y = `Classification - Event Types`, fill = pct)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = paste0(n, "\n(", round(pct, 1), "%)")),
+    size = 3) +
+  scale_fill_gradient(low = "white", high = "steelblue") +
+  labs(x = "Professional Learning Event Frequency", y = "Event Type", fill = "% within\nFrequency Group") +
+  theme_minimal()
 ```
+According to this heatmap，活动的举办频率整体呈现出较为明显的集中趋势，大多数 Association 每年举办 2–5 场活动，约占全部的 72%。随着活动数量增加，Association 的比例逐渐下降，而每年举办超过 20 场的仅有 3 家（约 5%）。这表明大多数 Association的活动频率维持在五个以内，但同时存在少数活动举办频率明显较高的 Association。
+
+这张热力图进一步展示了不同活动举办频率与活动类型之间的关系。从整体来看，无论协会每年举办多少场活动，Professional Learning 和 Conferences 始终是最核心的活动形式，与之前结论一致。
+
+在样本量最大的2-5场活动组中，Professional Learning / Workshops（39.7%） 和 Conferences （26.0%）占据主要地位，两者合计超过六成，说明专业学习与会议仍然是协会开展活动的核心形式。 Networking / Community Events（16.4%）也占据一定比例，表明部分协会除了专业发展之外，也重视会员之间的交流与联系。
+
+在5-10场活动组中，活动结构相对更加均衡。除了 Professional Learning /Workshops (17.4%) 和 Conferences（21.7%）之外，Online / Hybrid Events(26.1%), Presentations / Seminars
+（21.7%）等活动类型占有相近比例，说明部分活动举办较频繁的协会会采用更多元的活动形式，而不仅局限于传统的工作坊或会议。
+
+结合热力图中 Online /Hybrid Events在高频协会中的较高占比，可以推测线上活动的采用更多出现在组织能力较强、活动举办较频繁的协会中。对于活动数量较少的协会而言，线下活动可能仍然是主要形式。这意味着部分协会可能仍面临技术能力、人员配置或线上活动经验不足的问题。
+
+无论从活动丰富程度分析还是从活动频率分析来看，Networking /Community Events 都是协会活动的重要组成部分。尤其是在活动频次高的associations中，Community Events随着协会活动规模扩大或活动类型增多，其重要性明显上升。
+这说明协会在满足会员基本专业学习需求之后，往往会进一步关注会员之间的交流合作、社区建设以及职业网络拓展。换言之，协会的发展路径似乎是从知识传递逐步扩展到社区连接。
+
+综合来看，目前大部分协会已经能够稳定提供专业学习相关活动，但活动形式仍相对集中。那些活动频率较高、活动种类较丰富的协会则展现出更加成熟的发展模式，不仅举办专业学习活动，还积极开展线上活动、专题讲座以及社区交流活动。因此，Educators SA 可以考虑发挥平台和资源整合作用，帮助协会突破传统活动模式。例如，可以建立活动案例分享机制，让活动举办经验丰富的协会分享线上活动组织、社区活动运营以及多元化活动设计的实践经验。同时可以提供场地资源、活动策划模板或联合举办机会，降低中小型协会尝试新活动形式的成本。
+这样既有助于提升协会活动的丰富度，也能够进一步增强会员参与度和协会之间的协作联系，从而推动整个协会网络的发展。
 
 ##广告受众
 
@@ -879,20 +781,6 @@ LLM_wave_eve_classified |>
 在会员宣传方面，Email / Direct mail / Newsletter和Social media / Digital platforms是最常被使用的两种广告方式。Events / Professional learning和Member / Professional networks & Partnerships和Website / Online presence也是常被使用来吸引members的方式。此外Direct outreach / Institutional contacts和Program / Renewal-based recruitment也被提及用于广告宣传，但是只有很少部分of them使用。
 
 ```{r}
-LLM_wave_eve_classified |>
-  separate_rows(`Classification - Target Members`, sep = "; ") %>%
-  count(`Classification - Target Members`)
-
-LLM_wave_eve_classified |>
-  separate_rows(`Classification - Member Categories`, sep = "; ") %>%
-  count(`Classification - Member Categories`) 
-
-LLM_wave_eve_classified |>
-  separate_rows(`Classification - Member Advertising`, sep = "; ") %>%
-  count(`Classification - Member Advertising`)
-```
-
-```{r}
 wave_growth <- wave %>%
   mutate(row_number = row_number()) %>%
   select(row_number,`Was that an increase, decrease or stable number?`)
@@ -915,14 +803,7 @@ target_adv_count <- target_adv %>%
     `Classification - Member Advertising`
   )
 
-ggplot(
-  target_adv_count,
-  aes(
-    x = `Classification - Member Advertising`,
-    y = `Classification - Target Members`,
-    fill = n
-  )
-) +
+ggplot(target_adv_count, aes(x = `Classification - Member Advertising`, y = `Classification - Target Members`, fill = n)) +
   geom_tile() +
   geom_text(aes(label = n), size = 3) +
   scale_fill_gradient(low = "white", high = "steelblue") +
@@ -1037,37 +918,9 @@ ggplot(
   theme_minimal()
 ```
 
-```{r}
-adv_growth <- LLM_wave_eve_classified %>%
-  separate_rows(
-    `Classification - Member Advertising`,
-    sep = "; "
-  ) %>%
-  count(
-    `Was that an increase, decrease or stable number?`,
-    `Classification - Member Advertising`
-  )
-
-ggplot(
-  adv_growth,
-  aes(
-    x = `Classification - Member Advertising`,
-    y = n,
-    fill = `Was that an increase, decrease or stable number?`
-  )
-) +
-  geom_col(position = "fill") +
-  scale_y_continuous(labels = scales::percent) +
-  theme_minimal() +
-  theme(
-    axis.text.x =
-      element_text(angle = 60, hjust = 1)
-  )
-```
-
 # 和edsa的利害关系
 
-```{r}
+```{r, eval=FALSE}
 # LLM
 LLM_wave_rest <- wave %>%
   mutate(serial_num = row_number()) %>%
@@ -1186,7 +1039,7 @@ Advice & support，Association development，Membership & association developmen
 
 # Relationship with Educators SA
 
-```{r}
+```{r, eval=FALSE}
 # LLM
 
 LLM_wave_compare <- wave %>%
@@ -1226,8 +1079,6 @@ compare_threat %>%
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
   labs(y = "Count",title = "Advocacy Issue vs Threats Category")
 ```
-
-出现频率最高的类别为 Unsure（13次），表明部分协会尚未明确其主要倡议议题。除去该类别后， Unsure 同样是出现次数最多的类别（20次），明显高于其他所有类别。
 
 在 Advocacy Issue 方面，Subject/Program Sustainability & Quality（12次）是最受关注的议题，其次为 Access, Equity & Inclusion（9次）、Education Policy, Curriculum & Standards（9次）以及 Workforce & Staffing（8次）。这些结果反映出协会普遍关注教育质量、教育公平以及教师队伍建设等核心教育议题。
 
