@@ -1,8 +1,14 @@
 ---
-title: "EducatorSA"
+title: "EducatorSA Membership Data Analysis"
 author: "Siwen Yang"
+execute: 
+  echo: false
+  warning: false
+  message: false
 format: typst
 editor: visual
+
+    
 ---
 
 ```{r}
@@ -21,11 +27,11 @@ wave <- read_excel("D:/Desktop/EducatorSA/WAVE_Educators SA_members_8_5_2026.xls
 gateway <- read_excel("D:/Desktop/EducatorSA/Gateway_exports_association_users_export.xlsx")
 ```
 
-## Data Cleaning and Preparation
+# Data Cleaning and Preparation
 
 在正式分析前，对 WAVE 和Gateway会员调查数据进行了系统的数据清理与预处理，以提高数据质量并保证后续分析结果的可靠性。经数据清理后，最终保留了67条Gateway的数据和61条WAVE平台的数据样本用于后续分析。为了研究新旧平台的部分变量差异，一张有59条数据的共同members的合并表被建立。
 
-### 数据筛选与变量整理
+## 数据筛选与变量整理
 
 首先，删除了不属于研究对象的记录，包括 Educators SA（EDSA）自身记录以及管理员的账号数据和测试数据。同时，移除了姓名、联系方式、账单信息、社交媒体链接等与研究问题无关的Personally Identifiable Information，以降低数据复杂度并保护隐私。 此外，对部分变量名称进行了标准化处理，以提高后续分析与代码可读性。
 
@@ -72,7 +78,7 @@ gateway <- gateway %>%
   select(-c(`Signup Time`))
 ```
 
-### 数据修正与格式调整
+## 数据修正与格式调整
 
 调查问卷中部分协会以自由文本形式填写会员人数，例如："Approx 200", "Around 340 members", 把他们调整为数字格式方便后续研究。对于无法确定具体人数的回答，如 “Not sure”、“Can’t log in to check” 等，统一视为缺失值。完成清理后，将相关变量转换为numeric格式，确保能够用于统计分析。
 
@@ -157,9 +163,7 @@ gateway |>
   filter(duplicated(gateway$acronym) == TRUE)
 ```
 
-### 查看缺失值
-
-2024年the number of members有25%的缺失，while 2025年有17%
+## 查看缺失值
 
 ```{r}
 wave |>
@@ -168,7 +172,7 @@ wave |>
   theme(axis.text.x = element_text(vjust = 0.2))
 ```
 
-关于associations年龄的分布，both在gateway和wave平台都有超过约80%的associations没有回答年龄分布相关问题，可以理解为绝大部分associations不了解他们的members的年龄分布。由于有效数据过少，本次分析将不会包含会员年龄结构的相关分析。
+黑色的部分shows数据中缺失的数据，它表明了2024年the number of members有25%的缺失，while 2025年有17%。很多members在填写时只填写了两年中一年的数据。
 
 ```{r}
 gateway |>
@@ -182,6 +186,8 @@ gateway |>
   theme(axis.text.x = element_text(vjust = 0.2))
 
 ```
+
+关于associations年龄的分布，both在gateway和wave平台都有超过约80%的associations没有回答年龄分布相关问题，可以理解为绝大部分associations不了解他们的members的年龄分布。由于有效数据过少，本次分析将不会包含会员年龄结构的相关分析。
 
 ```{r}
 wave |>
@@ -204,7 +210,7 @@ wave <- wave |>
 
 部分问题存在较高比例的缺失值，尤其集中在会员统计、未来规划及协会定位等方面。这可能反映协会之间在信息记录方式、组织知识管理及战略规划成熟度方面存在差异。由于部分成员协会可能规模较小，这些缺失未必意味着数据不存在，而可能反映相关信息尚未被系统记录或集中保存。未来 Educators SA 可考虑提供自愿使用的数据收集模板、会员管理资源或经验分享机会，以支持协会提升信息管理的一致性和可获取性。
 
-```{r}
+```{r, eval=FALSE}
 check_missing_wave <- wave |>
   select(-c(asso_name, Status, acronym, number_members_2024, number_members_2025, Industry)) |>
   miss_var_summary()
@@ -212,7 +218,7 @@ check_missing_wave <- wave |>
 check_missing_wave
 ```
 
-```{r}
+```{r, eval=FALSE}
 check_missing_gateway <- gateway |>
   select(-c(asso_name, acronym)) |>
   miss_var_summary()
@@ -220,7 +226,7 @@ check_missing_gateway <- gateway |>
 check_missing_gateway
 ```
 
-### 缺失值填补
+## 缺失值填补
 
 会员人数是本项目的重要分析指标，但存在一定比例的缺失。2024 年会员人数约有 25% 缺失 while 2025 年会员人数约有 17.2% 缺失。
 
@@ -279,7 +285,7 @@ wave_filled <- wave %>%
 
 ```
 
-### 人工校验与修正
+## 人工校验与修正
 
 部分公司在Gateway平台与WAVE平台的名字输入有小的不同，导致在合并表格时无法成功合并，所以人工将两张表格中同一家association的名字统一。
 
@@ -343,9 +349,9 @@ leave_member |>
 
 总结，WAVE平台相较于Gateway平台survey的问题更全面，但是也有更多的缺失数据，这可能也与WAVE是新平台有关。
 
-##会员规模
+#会员规模
 
-###付费会员
+##付费会员
 
 ```{r}
 wave |>
@@ -409,7 +415,7 @@ compare_financial_memb %>%
 
 WAVE 平台中较高比例的 Unsure 回答意味着会员规模数据存在一定的不确定性。建议优先完善会员人数记录，以提高数据的可靠性。
 
-###24-25年变化
+##24-25年变化
 
 ```{r}
 mean(wave$number_members_2024, na.rm = TRUE)
@@ -439,7 +445,7 @@ sum(wave_filled$number_members_2024)
 sum(wave_filled$number_members_2025)
 ```
 
-### 人员增长趋势
+## 人员增长趋势
 
 ```{r}
 wave |>
@@ -449,7 +455,7 @@ wave |>
 
 大部分associations的人数都比较稳定。有12家组织表示他们的会员数量正在增长，while 10家正在减少。值得注意的是，Australian Council for Educational Leaders作为一家在2025年有4000名成员的大公司，他们也面临成员数量减少问题。
 
-### 'Early Career' vs 'Pre Service'
+## 'Early Career' vs 'Pre Service'
 
 ```{r}
 # 分开的
@@ -602,7 +608,7 @@ wave |>
   filter(`How many 'Early Career' or 'Pre Service' members do you have?` == "51-100")
 ```
 
-##活动举办
+#活动举办
 
 ```{r, eval=FALSE}
 # LLM
@@ -656,7 +662,6 @@ LLM_wave_eve_classified |>
 
 assciations举办活动的地点是比较丰富的，学校、university等教育机构被认为是协会举办活动的首选，其次还有training centres，community和hotels等场所也是协会们常用的选择。有些协会会举办线上活动，但占比不多约11%。只有极少数协会有专门举办活动的facilities。
 
-
 ```{r}
 event_diversity <- LLM_wave_eve_classified |>
   mutate(
@@ -701,7 +706,7 @@ ggplot(event_type_by_diversity,aes(x = factor(n_event_types),y = pct,fill = `Cla
 
 当活动种类从2种再进一步丰富到三种和四种，Presentations/Seminars和Online/Hybird events的占比都有明显增加，成为了活动类型的重要组成部分之一。此外special events比如Competitions的占比也略有上涨，但仍然是占比最少的活动。随着活动越来越丰富，不同活动类型的占比也越来越均匀。综合上述发现，在活动多元化的协会中，在基础的教育和会议活动之外，一部分选择增加 Presentations/Seminars来深挖专业内容，另一部分选择增加 Online/Hybird events突破线下活动限制，扩大成员参与范围。
 
-#### Frenqucy*diversity
+## Frenqucy\*diversity
 
 ```{r}
 event_type_by_frequency <- LLM_wave_eve_classified |>
@@ -728,24 +733,22 @@ ggplot(event_type_by_frequency,aes(x = `Classification - Professional Learning E
   labs(x = "Professional Learning Event Frequency", y = "Event Type", fill = "% within\nFrequency Group") +
   theme_minimal()
 ```
+
 According to this heatmap，活动的举办频率整体呈现出较为明显的集中趋势，大多数 Association 每年举办 2–5 场活动，约占全部的 72%。随着活动数量增加，Association 的比例逐渐下降，而每年举办超过 20 场的仅有 3 家（约 5%）。这表明大多数 Association的活动频率维持在五个以内，但同时存在少数活动举办频率明显较高的 Association。
 
 这张热力图进一步展示了不同活动举办频率与活动类型之间的关系。从整体来看，无论协会每年举办多少场活动，Professional Learning 和 Conferences 始终是最核心的活动形式，与之前结论一致。
 
 在样本量最大的2-5场活动组中，Professional Learning / Workshops（39.7%） 和 Conferences （26.0%）占据主要地位，两者合计超过六成，说明专业学习与会议仍然是协会开展活动的核心形式。 Networking / Community Events（16.4%）也占据一定比例，表明部分协会除了专业发展之外，也重视会员之间的交流与联系。
 
-在5-10场活动组中，活动结构相对更加均衡。除了 Professional Learning /Workshops (17.4%) 和 Conferences（21.7%）之外，Online / Hybrid Events(26.1%), Presentations / Seminars
-（21.7%）等活动类型占有相近比例，说明部分活动举办较频繁的协会会采用更多元的活动形式，而不仅局限于传统的工作坊或会议。
+在5-10场活动组中，活动结构相对更加均衡。除了 Professional Learning /Workshops (17.4%) 和 Conferences（21.7%）之外，Online / Hybrid Events(26.1%), Presentations / Seminars （21.7%）等活动类型占有相近比例，说明部分活动举办较频繁的协会会采用更多元的活动形式，而不仅局限于传统的工作坊或会议。
 
 结合热力图中 Online /Hybrid Events在高频协会中的较高占比，可以推测线上活动的采用更多出现在组织能力较强、活动举办较频繁的协会中。对于活动数量较少的协会而言，线下活动可能仍然是主要形式。这意味着部分协会可能仍面临技术能力、人员配置或线上活动经验不足的问题。
 
-无论从活动丰富程度分析还是从活动频率分析来看，Networking /Community Events 都是协会活动的重要组成部分。尤其是在活动频次高的associations中，Community Events随着协会活动规模扩大或活动类型增多，其重要性明显上升。
-这说明协会在满足会员基本专业学习需求之后，往往会进一步关注会员之间的交流合作、社区建设以及职业网络拓展。换言之，协会的发展路径似乎是从知识传递逐步扩展到社区连接。
+无论从活动丰富程度分析还是从活动频率分析来看，Networking /Community Events 都是协会活动的重要组成部分。尤其是在活动频次高的associations中，Community Events随着协会活动规模扩大或活动类型增多，其重要性明显上升。 这说明协会在满足会员基本专业学习需求之后，往往会进一步关注会员之间的交流合作、社区建设以及职业网络拓展。换言之，协会的发展路径似乎是从知识传递逐步扩展到社区连接。
 
-综合来看，目前大部分协会已经能够稳定提供专业学习相关活动，但活动形式仍相对集中。那些活动频率较高、活动种类较丰富的协会则展现出更加成熟的发展模式，不仅举办专业学习活动，还积极开展线上活动、专题讲座以及社区交流活动。因此，Educators SA 可以考虑发挥平台和资源整合作用，帮助协会突破传统活动模式。例如，可以建立活动案例分享机制，让活动举办经验丰富的协会分享线上活动组织、社区活动运营以及多元化活动设计的实践经验。同时可以提供场地资源、活动策划模板或联合举办机会，降低中小型协会尝试新活动形式的成本。
-这样既有助于提升协会活动的丰富度，也能够进一步增强会员参与度和协会之间的协作联系，从而推动整个协会网络的发展。
+综合来看，目前大部分协会已经能够稳定提供专业学习相关活动，但活动形式仍相对集中。那些活动频率较高、活动种类较丰富的协会则展现出更加成熟的发展模式，不仅举办专业学习活动，还积极开展线上活动、专题讲座以及社区交流活动。因此，Educators SA 可以考虑发挥平台和资源整合作用，帮助协会突破传统活动模式。例如，可以建立活动案例分享机制，让活动举办经验丰富的协会分享线上活动组织、社区活动运营以及多元化活动设计的实践经验。同时可以提供场地资源、活动策划模板或联合举办机会，降低中小型协会尝试新活动形式的成本。 这样既有助于提升协会活动的丰富度，也能够进一步增强会员参与度和协会之间的协作联系，从而推动整个协会网络的发展。
 
-##广告受众
+#广告受众
 
 ```{r}
 LLM_wave_eve_classified |>
@@ -801,124 +804,48 @@ target_adv_count <- target_adv %>%
   count(
     `Classification - Target Members`,
     `Classification - Member Advertising`
-  )
-
-ggplot(target_adv_count, aes(x = `Classification - Member Advertising`, y = `Classification - Target Members`, fill = n)) +
-  geom_tile() +
-  geom_text(aes(label = n), size = 3) +
-  scale_fill_gradient(low = "white", high = "steelblue") +
-  theme_minimal() +
-  theme(
-    axis.text.x =
-      element_text(angle = 60, hjust = 1)
-  ) + 
-labs(title = "Advertising Approaches by Target Member Groups", 
-     x ="Member Advertising" , y = "Target Members")
-
-```
-
-```{r}
-target_adv_pct <- target_adv %>%
-  count(
-    `Classification - Target Members`,
-    `Classification - Member Advertising`
   ) %>%
   group_by(`Classification - Target Members`) %>%
   mutate(
-    pct = n / sum(n)
-  )
+    percentage = n / sum(n) * 100,
+    label = paste0(n, "\n(", round(percentage, 1), "%)")
+  ) %>%
+  ungroup() 
+  
 
-ggplot(
-  target_adv_pct,
+target_adv_count %>%
+  mutate(`Classification - Target Members` = fct_relevel(`Classification - Target Members`, "Other", after = Inf)) %>%
+  ggplot(
   aes(
     x = `Classification - Member Advertising`,
     y = `Classification - Target Members`,
-    fill = pct
-  )
-) +
-  geom_tile() +
-  geom_text(
-    aes(label = scales::percent(pct, accuracy = 1))
-  ) +
-  scale_fill_gradient(
-    low = "white",
-    high = "steelblue"
-  ) +
-  theme_minimal() +
-  theme(
-    axis.text.x =
-      element_text(angle = 60, hjust = 1)
-  )
-
-```
-
-```{r}
-adv_growth <- LLM_wave_eve_classified %>%
-  separate_rows(
-    `Classification - Member Advertising`,
-    sep = "; "
-  )
-
-adv_growth_count <- adv_growth %>%
-  count(
-    `Was that an increase, decrease or stable number?`,
-    `Classification - Member Advertising`
-  )
-
-ggplot(
-  adv_growth_count,
-  aes(
-    x = `Was that an increase, decrease or stable number?`,
-    y = `Classification - Member Advertising`,
     fill = n
   )
 ) +
   geom_tile() +
-  geom_text(aes(label = n)) +
-  scale_fill_gradient(
-    low = "white",
-    high = "darkgreen"
+  geom_text(aes(label = label), size = 3) +
+  scale_fill_gradient(low = "white", high = "steelblue") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 60, hjust = 1)
   ) +
-  theme_minimal()
+  labs(
+    title = "Advertising Approaches by Target Member Groups",
+    x = "Member Advertising",
+    y = "Target Members",
+    fill = "Count"
+  )
 ```
 
-```{r}
-adv_growth_pct <- adv_growth %>%
-  count(
-    `Was that an increase, decrease or stable number?`,
-    `Classification - Member Advertising`
-  ) %>%
-  group_by(`Was that an increase, decrease or stable number?`) %>%
-  mutate(
-    pct = n / sum(n)
-  )
+对于professional practitioners，Social media (24.8%) 和 Email （22.2%） 占据前两名，是最主要的宣传方式。Professional networks & Partnerships (18.8%) ， Professional learning Events (17.9%）也是主要的adverting方式之一，其次是website（10.3%）。也有少量公司选择用Insititutional contacts（2.6%） 和 Renewal-based recruitment （3.4%）作为宣传方式。
 
-ggplot(
-  adv_growth_pct,
-  aes(
-    x = `Was that an increase, decrease or stable number?`,
-    y = `Classification - Member Advertising`,
-    fill = pct
-  )
-) +
-  geom_tile() +
-  geom_text(
-    aes(
-      label =
-        scales::percent(
-          pct,
-          accuracy = 1
-        )
-    )
-  ) +
-  scale_fill_gradient(
-    low = "white",
-    high = "darkgreen"
-  ) +
-  theme_minimal()
-```
+对于senior professionals和早期职业者，他们的分布也和professional practitioners相似，主要以Social media和Email是主导，professional learning Events和Professional networks为补充。
 
-# 和edsa的利害关系
+对于individual members群体，协会采用的是数字大众广播和行业人脉/活动的组合形式。数字渠道负责覆盖，人脉和活动负责转化。一对一的直接触达和renewal-based recruitment极少被使用。对于不同阶段的individual members，associations也几乎不做出差异化的宣传策略。
+
+对于学校及其他组织类目标群体，Email （30.8%）和 Social Media （23.1%）仍然是最主要的宣传渠道，与面向个人会员群体的宣传模式整体较为相似。相比其他目标群体，Website 的使用比例略高（19.2%），说明部分协会在面向组织时更倾向于依赖官方网站等正式信息渠道进行宣传。从整体分布来看，不同目标群体之间的广告渠道组合存在一定共性，大多数协会均以 Email 和 Social Media 为核心渠道，并辅以专业网络和活动推广。虽然Website 在组织类群体中的重要性有所提升，但目前尚未观察到非常明显的受众细分或高度差异化的宣传策略。
+
+# 与edsa的合作
 
 ```{r, eval=FALSE}
 # LLM
@@ -933,111 +860,7 @@ write.csv(LLM_wave_rest, "data/LLM_wave_rest.csv")
 LLM_wave_rest_classified <- read_csv("data/LLM_wave_rest_classified.csv")
 ```
 
-### Service
-
-```{r}
-wave$`Does your association offer “Consultancy services” to sites or individuals?`[wave$`Does your association offer “Consultancy services” to sites or individuals?` == "We offer onsite PL services - negotiated times, topics and presenters"] <- "Yes"
-
-wave |>
-  ggplot(aes(x = `Does your association offer “Consultancy services” to sites or individuals?`)) + 
-  geom_bar()
-
-wave |>
-  count(`Does your association offer “Consultancy services” to sites or individuals?`)
-
-```
-
-```{r}
-wave |>
-  separate_rows(`What services does your Association offer?`, sep = "; ") %>%
-  filter(!is.na(`What services does your Association offer?`)) %>%
-  ggplot(aes(x = fct_rev(fct_infreq(`What services does your Association offer?`)))) + 
-  geom_bar() + 
-  coord_flip() + 
-  labs(x = "What services does your Association offer?")
-
-wave |>
-  separate_rows(`What services does your Association offer?`, sep = "; ") %>%
-  filter(!is.na(`What services does your Association offer?`)) %>%
-  count(`What services does your Association offer?`)
-```
-
-只有约18%的associations有Consultancy services。这些 associations 更倾向于提供 professional learning、advocacy、events、publications 等服务，而不是提供一对一或专业咨询服务。
-
-```{r}
-LLM_wave_rest_classified |>
-  separate_rows(`Resources/Publications Category`, sep = "; ") %>%
-  mutate(`Resources/Publications Category` = fct_relevel(`Resources/Publications Category`, "Other", after = Inf)) %>%
-  ggplot(aes(x = `Resources/Publications Category`)) + 
-  geom_bar() + 
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))
-
-LLM_wave_rest_classified |>
-  separate_rows(`Resources/Publications Category`, sep = "; ") %>%
-  count(`Resources/Publications Category`)
-```
-
-Resources/Publications Category中，Digital/online resources和Teaching & curriculum resources是最高频的种类。这说明 associations 提供的 resources 很大程度上是：accessible, practical and directly relevant to educators’ teaching practice而不是单纯的学术研究材料。
-
-```{r}
-LLM_wave_rest_classified |>
-  separate_rows(`Advocacy Issue Category`, sep = "; ") %>%
-  mutate(`Advocacy Issue Category` = fct_relevel(`Advocacy Issue Category`, "Unsure", after = Inf)) %>%
-  ggplot(aes(x = `Advocacy Issue Category`)) + 
-  geom_bar() + 
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))
-
-LLM_wave_rest_classified |>
-  separate_rows(`Advocacy Issue Category`, sep = "; ") %>%
-  count(`Advocacy Issue Category`) 
-```
-
-Curriculum & education policy和Subject-specific advocacy
-
-```{r}
-LLM_wave_rest_classified |>
-  separate_rows(`Threats Category`, sep = "; ") %>%
-  mutate(`Threats Category` = fct_relevel(`Threats Category`, "Other", after = Inf)) %>%
-  ggplot(aes(x = `Threats Category`)) + 
-  geom_bar() + 
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))
-```
-
-```{r}
-LLM_wave_rest_classified |>
-  separate_rows(`Contribution to Educators SA Category`, sep = "; ") %>%
-  mutate(`Contribution to Educators SA Category` = fct_relevel(`Contribution to Educators SA Category`, "Other", after = Inf)) %>%
-  ggplot(aes(x = `Contribution to Educators SA Category`)) + 
-  geom_bar() + 
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))
-
-LLM_wave_rest_classified |>
-  separate_rows(`Contribution to Educators SA Category`, sep = "; ") %>%
-  count(`Contribution to Educators SA Category`) 
-```
-
-Specialist expertise是所有类别中最高的，明显高于其他词频高的词。这说明associations普遍willing为Educator SA提供专业知识、行业经验和领域expertise。这对EducatorSA来说无疑是重要的。同时Participation & engagement也被提到20次，说明associations也希望积极参与相关活动，而不仅仅是提供知识。 Advocacy & representation和Networking & collaboration也是经常被提到的内容。这说明association同时也能够帮助EducatorSA建立合作关系、共同开展工作或促进不同组织之间的合作，建立更大的profressional network。
-
-```{r}
-LLM_wave_rest_classified |>
-  separate_rows(`Expected Membership Benefits Category`, sep = "; ") %>%
-  mutate(`Expected Membership Benefits Category` = fct_relevel(`Expected Membership Benefits Category`, "Other", after = Inf)) %>%
-  ggplot(aes(x = `Expected Membership Benefits Category`)) + 
-  geom_bar() + 
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))
-
-LLM_wave_rest_classified |>
-  separate_rows(`Expected Membership Benefits Category`, sep = "; ") %>%
-  count(`Expected Membership Benefits Category`)
-```
-
-而association希望从EducatorSA获取的内容却show difference。associations最关注的是Networking & collaboration，远高于其他。Advocacy & collective voice，Community & belonging，Support & community这些分类也表明了members对associations之间交流的需求。也就是说associations比起专业知识，更希望能通过Educator SA认识其他组织、建立合作关系、寻找合作机会等。同时Governance & administration的数据也显示，associations希望获得 governance、administration、committee 等协会管理方面的帮助。这也和之前的question的研究结果一致。这意味着对EducatorSA 来说，促进组织间的交流与合作应该是重要的目标之一。
-
-Advice & support，Association development，Membership & association development，Practical operational support，Professional development
-
-信息 Information & policy 推广 Promotion & event support 资金 Financial support，Funding & grants
-
-# Relationship with Educators SA
+## advocacy & biggest threats
 
 ```{r, eval=FALSE}
 # LLM
@@ -1092,8 +915,9 @@ Workforce & Staffing 同时是重要议题和重要威胁。该类别在 Advocac
 
 协会在倡议层面主要关注教育质量、公平与政策等行业发展议题，而在风险层面则更担忧会员参与度下降、人员配置不足及组织能力建设问题。
 
+## What Associations Contribute vs What They Expect from Educators SA
+
 ```{r}
-# What Associations Contribute vs What They Expect from Educators SA
 compare_contribute <- bind_rows(
   LLM_wave_compare_classified %>%
     separate_rows(`Contribution to Educators SA Category`, sep = "; ") %>%
@@ -1116,6 +940,18 @@ compare_contribute %>%
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
   labs(y = "Count",title = "What Associations Contribute vs What They Expect from Educators SA")
 ```
+
+在 Association Can Contribute 方面，Specialist Expertise & Perspectives（18次）是协会认为自己最能提供价值的领域，其次为 Advocacy & Collective Voice（16次）、Organisational Support & Capacity（16次）以及 Networking & Support & Collaboration（14次）。这反映出协会普遍将自身定位为专业知识输出者、集体发声代表以及组织支持提供者。
+
+在 Association Wants 方面，Networking & Support & Collaboration（31次）远远领先于其他类别，其次为 Information & Knowledge（16次）、Governance & Administration（15次）以及 Advocacy & Collective Voice（13次）。这说明会员对 Educators SA 最核心的期待，集中在网络连接与协作支持、信息知识获取以及治理层面的协助上。
+
+协会认为自己能贡献的内容与会员实际期待之间存在明显落差。协会更倾向于强调自身在专业知识（Specialist Expertise & Perspectives）和倡议发声（Advocacy & Collective Voice）方面的价值；而会员的期待则更集中在网络协作（Networking & Support & Collaboration）、信息知识（Information & Knowledge）和治理支持（Governance & Administration）等更偏"日常支持与连接"性质的需求上。这表明协会的自我定位与会员的实际需求方向并不完全一致。
+
+Networking & Support & Collaboration 是最突出的期待缺口。该类别在 Association Wants 中高达31次，几乎是所有类别中最高的，但在 Association Can Contribute 中仅为14次，差距达17次，是全表最大的落差。这说明会员对协作与联结支持的需求远超协会目前自认为能够提供的水平，是最需要优先补强的领域。
+
+Advocacy & Collective Voice 与 Organisational Support & Capacity 同时是协会自认擅长且会员认可需要的领域。这两个类别在 Contribute与 Wants中均排名靠前，说明协会在集体发声和组织支持方面的定位与会员期待基本吻合，是协会现有优势可以持续巩固的方向。
+
+总体来看，协会在自我认知上更强调专业知识与倡议代表的角色，而会员实际最期待的是更基础、更持续的网络协作与信息支持；两者在"倡导代表"和"组织支持"方向上高度一致，但在"协作联结"这一核心需求上存在最大缺口，值得被重点关注。
 
 #Advice
 
