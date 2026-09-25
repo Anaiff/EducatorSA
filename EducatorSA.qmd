@@ -7,8 +7,6 @@ execute:
   message: false
 format: typst
 editor: visual
-
-    
 ---
 
 ```{r}
@@ -17,6 +15,7 @@ library(tidyverse)
 library(naniar)
 library(visdat)
 library(ggplot2)
+library(knitr)
 ```
 
 ```{r}
@@ -29,11 +28,13 @@ gateway <- read_excel("D:/Desktop/EducatorSA/Gateway_exports_association_users_e
 
 # Data Cleaning and Preparation
 
-在正式分析前，对 WAVE 和Gateway会员调查数据进行了系统的数据清理与预处理，以提高数据质量并保证后续分析结果的可靠性。经数据清理后，最终保留了67条Gateway的数据和61条WAVE平台的数据样本用于后续分析。为了研究新旧平台的部分变量差异，一张有59条数据的共同members的合并表被建立。
+Before the main analysis, the WAVE and Gateway membership survey data were systematically cleaned and prepared to improve data quality and ensure the reliability of the subsequent analysis. After data cleaning, 67 Gateway records and 61 WAVE records were retained for further analysis. In addition, a combined dataset containing 59 common members was created to compare selected variables between the old and new platforms.
 
-## 数据筛选与变量整理
+## Data Filtering and Variable Preparation
 
-首先，删除了不属于研究对象的记录，包括 Educators SA（EDSA）自身记录以及管理员的账号数据和测试数据。同时，移除了姓名、联系方式、账单信息、社交媒体链接等与研究问题无关的Personally Identifiable Information，以降低数据复杂度并保护隐私。 此外，对部分变量名称进行了标准化处理，以提高后续分析与代码可读性。
+First, records that were not relevant to the research were removed. These included Educators SA (EDSA) records, administrator accounts, and test records. Personally Identifiable Information (PII), such as names, contact details, billing information, and social media links, was also removed because it was not relevant to the research questions. This reduced the complexity of the dataset and helped protect member privacy.
+
+Some variable names were also standardised to improve consistency and make the data easier to analyse and interpret.
 
 ```{r}
 wave$`Start Date` <- as.Date(wave$`Start Date`, origin = "1899-12-30")
@@ -78,15 +79,17 @@ gateway <- gateway %>%
   select(-c(`Signup Time`))
 ```
 
-## 数据修正与格式调整
+## Data Correction and Formatting
 
-调查问卷中部分协会以自由文本形式填写会员人数，例如："Approx 200", "Around 340 members", 把他们调整为数字格式方便后续研究。对于无法确定具体人数的回答，如 “Not sure”、“Can’t log in to check” 等，统一视为缺失值。完成清理后，将相关变量转换为numeric格式，确保能够用于统计分析。
+Some associations reported their membership numbers using free-text responses, such as “Approx 200” and “Around 340 members”. These responses were converted into numerical values to support further analysis. Responses where the number could not be determined, such as “Not sure” and “Can’t log in to check”, were treated as missing values.
 
-对于会员规模和 Early Career 会员数量等区间型变量，设定为ordered categories，确保后续交叉分析和可视化时类别顺序保持一致。同时，对于缺失的分类回答，以 “unsure” 进行标记。
+After cleaning, relevant variables were converted to numeric format where appropriate. For variables reported as membership size or Early Career membership ranges, ordered categories were used to maintain a consistent order in cross-tabulation and visualisation. For categorical questions with missing responses, “Unsure” was used as a separate category where appropriate.
 
-由于系统原因，部分账户存在duplicate问题（同一个member的active账户和inactive账户），优先保留较新的记录作为主记录，当新记录中部分字段缺失而旧记录存在有效信息时，使用旧记录补充相关内容，对重复数据进行了删除。该处理方式能够最大程度保留信息，同时避免重复统计。
+Some duplicate records were caused by system issues, where the same member had both an active and an inactive account. The newer record was retained as the main record. If some fields were missing in the newer record but valid information was available in the older record, the older information was used to supplement the newer record. Duplicate records were then removed. This approach helped retain as much useful information as possible while avoiding duplicate counting.
 
 ```{r}
+#| output: false
+
 wave[wave$number_members_2025 %in% "216 SA individual, student and institution", "number_members_2025"] <- "216"
 wave[wave$number_members_2025 %in% "290 - not including school associate members (eg teachers from member schools)", "number_members_2025"] <- "290"
 wave[wave$number_members_2025 %in% "Cant log in to check", "number_members_2025"] <- NA
@@ -99,6 +102,8 @@ wave <- wave %>%
 ```
 
 ```{r}
+#| output: false
+
 wave[wave$number_members_2024 %in% "75 state members (national association is greater)", "number_members_2024"] <- "75"
 wave[wave$number_members_2024 %in% "150ish", "number_members_2024"] <- "150"
 wave[wave$number_members_2024 %in% "43 metro schools, 16 country schools, 17 individuals, 1 student", "number_members_2024"] <- "77"
@@ -120,6 +125,8 @@ wave$`How many 'Early Career' or 'Pre Service' members do you have?` <- factor(w
 ```
 
 ```{r}
+#| output: false
+
 wave[wave$number_committee_members %in% "9 committee members, around 30 members", "number_committee_members"] <- "9"
 wave[wave$number_committee_members %in% "Eleven", "number_committee_members"] <- "11"
 wave[wave$number_committee_members %in% "Currently 6 until AGM", "number_committee_members"] <- "6"
@@ -130,10 +137,14 @@ wave <- wave %>%
 ```
 
 ```{r}
+#| output: false
+
 gateway$`How many current financial members do you have?`[gateway$`How many current financial members do you have?` == "100"] <- "51-100"
 ```
 
 ```{r}
+#| output: false
+
 # 检查重复
 gateway |>
   filter(duplicated(gateway$acronym) == TRUE)
@@ -141,6 +152,8 @@ gateway |>
 ```
 
 ```{r}
+#| output: false
+
 # 删除重复
 gateway <- gateway %>%
   filter(!(asso_name == "Modern Language Teachers Association of South Australia" & `Membership Number` == "EdSA1648")) %>%
@@ -159,11 +172,13 @@ gateway <- gateway %>%
 ```
 
 ```{r}
+#| output: false
+
 gateway |>
   filter(duplicated(gateway$acronym) == TRUE)
 ```
 
-## 查看缺失值
+## Missing Data Assessment
 
 ```{r}
 wave |>
@@ -172,7 +187,7 @@ wave |>
   theme(axis.text.x = element_text(vjust = 0.2))
 ```
 
-黑色的部分shows数据中缺失的数据，它表明了2024年the number of members有25%的缺失，while 2025年有17%。很多members在填写时只填写了两年中一年的数据。
+The black sections in the missing-data visualisations show where data were unavailable. For the number of members, approximately 25% of the responses were missing for 2024, while approximately 17% were missing for 2025. Many associations provided membership numbers for only one of the two years.
 
 ```{r}
 gateway |>
@@ -187,7 +202,7 @@ gateway |>
 
 ```
 
-关于associations年龄的分布，both在gateway和wave平台都有超过约80%的associations没有回答年龄分布相关问题，可以理解为绝大部分associations不了解他们的members的年龄分布。由于有效数据过少，本次分析将不会包含会员年龄结构的相关分析。
+For member age distribution, more than approximately 80% of associations on both the Gateway and WAVE platforms did not provide information about the age distribution of their members. This suggests that many associations may not have detailed information about the age structure of their membership. Due to the limited amount of valid data, age distribution was excluded from the analysis.
 
 ```{r}
 wave |>
@@ -206,9 +221,11 @@ wave <- wave |>
   select(-c("If you are aware, what would be the % of your current members in each age group? Age group 18-25 in %", "Approximately, what is the % of your current members in the age group 26-35?", "Approximately, what is the % of your current members in the age group 36-45?", "Approximately, what is the % of your current members in the age group 46-55?", "Approximately, what is the % of your current members in the age group 55+?"))
 ```
 
-在其余的问题中，“What is your biggest advocacy issue for 2025?”，“What are the biggest threats to your Association in 2025?” 有约35%的缺失。“What kinds of resources/publications do you provide?”，“How many current financial members do you have?”，“How many 'Early Career' or 'Pre Service' members do you have?”，“What are your membership predictions for 2025 and why?”，“What services does your Association offer?”，“Who is your target audience?”这些问题也有较高的缺失率，约25%。
+Other questions also had relatively high levels of missing data. Approximately 35% of responses were missing for “What is your biggest advocacy issue for 2025?” and “What are the biggest threats to your Association in 2025?”. Several other questions had missing rates of around 25%, including “What kinds of resources/publications do you provide?”, “How many current financial members do you have?”, “How many 'Early Career' or 'Pre Service' members do you have?”, “What are your membership predictions for 2025 and why?”, “What services does your Association offer?”, and “Who is your target audience?”.
 
-部分问题存在较高比例的缺失值，尤其集中在会员统计、未来规划及协会定位等方面。这可能反映协会之间在信息记录方式、组织知识管理及战略规划成熟度方面存在差异。由于部分成员协会可能规模较小，这些缺失未必意味着数据不存在，而可能反映相关信息尚未被系统记录或集中保存。未来 Educators SA 可考虑提供自愿使用的数据收集模板、会员管理资源或经验分享机会，以支持协会提升信息管理的一致性和可获取性。
+The relatively high level of missing data in some questions was particularly concentrated in areas related to membership statistics, future planning, and association roles and services. This may reflect differences in how associations record information and how easily this information can be accessed. For smaller associations, missing data may not necessarily mean that the information does not exist. Instead, it may indicate that the information has not been formally recorded or is not centrally available.
+
+In the future, Educators SA could consider providing optional data collection templates, membership management resources, or opportunities for associations to share practices. These resources could help associations improve the consistency and accessibility of their information.
 
 ```{r, eval=FALSE}
 check_missing_wave <- wave |>
@@ -226,18 +243,24 @@ check_missing_gateway <- gateway |>
 check_missing_gateway
 ```
 
-## 缺失值填补
+## Missing Data Imputation
 
-会员人数是本项目的重要分析指标，但存在一定比例的缺失。2024 年会员人数约有 25% 缺失 while 2025 年会员人数约有 17.2% 缺失。
+Membership size was an important indicator for this project, but some membership figures were missing. Approximately 25% of the 2024 membership figures and 17.2% of the 2025 figures were missing.
 
-为减少信息损失，采用分层填补策略。若某协会仅缺失 2024 年数据，则使用其 2025 年数据填补。若仅缺失 2025 年数据，则使用其 2024 年数据填补。若两年数据均缺失，则使用对应年份会员人数的中位数进行填补。由于会员人数分布存在较大的离群值，因此选择中位数而非均值进行填补，以降低极端值对结果的影响。
+A step-by-step imputation approach was used to reduce information loss. If an association had a missing value for 2024 but had a valid value for 2025, the 2025 value was used to fill the missing 2024 value. Similarly, if only the 2025 value was missing, the 2024 value was used.
+
+If membership numbers were missing for both years, the median membership number for the relevant year was used for imputation. The median was selected instead of the mean because membership size had several large outliers. Using the median therefore reduced the influence of unusually large associations on the imputed values.
 
 ```{r}
+#| output: false
+
 wave$`How many 'Early Career' or 'Pre Service' members do you have?`[is.na(wave$`How many 'Early Career' or 'Pre Service' members do you have?`)] <- "unsure"
 wave$`How many current financial members do you have?`[is.na(wave$`How many current financial members do you have?`)] <- "unsure"
 ```
 
 ```{r}
+#| output: false
+
 glimpse(wave)
 check_missing_wave <- miss_var_summary(wave)
 ```
@@ -248,6 +271,8 @@ wave <- wave %>%
 ```
 
 ```{r}
+#| output: false
+
 # 有两个association由于duplicate问题有两条数据，保留了更新的一条，有一些数据比如Industry和问卷问题，在新数据中缺失的用老数据的内容填补，来避免信息流失，其余的在检查后决定其他保持不变。
 wave$Industry[wave$asso_name == "Australian Council for Educational Leaders"] <- "Education and Training"
 
@@ -256,6 +281,8 @@ wave <- wave %>%
 ```
 
 ```{r}
+#| output: false
+
 wave$Industry[wave$asso_name == "Home Economics Institute of Australia Inc"] <- "Education and Training"
 wave$`What services does your Association offer?`[wave$asso_name == "Home Economics Institute of Australia Inc"] <- "Professional learning; Publications; Advocacy; Student/Learner Activities"
 wave$`Who is your target audience?`[wave$asso_name == "Home Economics Institute of Australia Inc"] <- "Home Economics/ Technology teachers"
@@ -285,11 +312,13 @@ wave_filled <- wave %>%
 
 ```
 
-## 人工校验与修正
+## Manual Data Validation and Platform Comparison
 
-部分公司在Gateway平台与WAVE平台的名字输入有小的不同，导致在合并表格时无法成功合并，所以人工将两张表格中同一家association的名字统一。
+Some association names were entered slightly differently in the Gateway and WAVE platforms. These differences prevented records belonging to the same association from being correctly matched when the datasets were merged. The association names were therefore manually checked and standardised across the two datasets.
 
 ```{r}
+#| output: false
+
 # 统一名字
 gateway$asso_name[gateway$asso_name == "Association of Heads of Music in Non-Government Schools South Australia Inc."] <- "Association of Heads of Music in Non Government Schools South Australia Inc."
 gateway$asso_name[gateway$asso_name == "Australian Association of Special Education"] <- "Australian Association of Special Education (SA Chapter)"
@@ -330,28 +359,38 @@ gateway$asso_name[gateway$asso_name == "Early Childhood Association"] <- "Early 
 ```
 
 ```{r}
+#| output: false
+
 new_member <- anti_join(wave, gateway, by = "asso_name")
 leave_member <- anti_join(gateway, wave, by = "asso_name")
 common_member <- inner_join(gateway, wave, by = "asso_name", suffix = c("_gateway", "_wave"))
 ```
 
+New members:
+
 ```{r}
 new_member |>
-  select(asso_name)
+  select(asso_name) |>
+  rename(`Association Name` = asso_name) |>
+  kable()
 ```
+
+Leave members:
 
 ```{r}
 leave_member |>
-  select(asso_name)
+  select(asso_name) |>
+  rename(`Association Name` = asso_name) |>
+  kable()
 ```
 
-通过对比新旧平台数据，有四个新的associations加入EducatorSA。共有八家associations在WAVE平台没有数据，其中ACHPER (SA)仍然是active member只是没有在新平台注册，while 其他七家企业可以被认为是leave member。
+A comparison of the old and new platform data identified four new associations that joined Educators SA. There were also eight associations with no data recorded in the WAVE platform. ACHPER (SA) remains an active member but had not registered on the new platform, while the other seven associations can be considered associations that have left Educators SA.
 
-总结，WAVE平台相较于Gateway平台survey的问题更全面，但是也有更多的缺失数据，这可能也与WAVE是新平台有关。
+Overall, the WAVE survey contains more comprehensive questions than the Gateway survey, but it also has a higher level of missing data in several areas. This may partly be related to the fact that WAVE is a newer platform and associations may still be adapting to the new system.
 
-#会员规模
+# Membership Size and Trends
 
-##付费会员
+## Current Financial Membership
 
 ```{r}
 wave |>
@@ -362,7 +401,9 @@ wave |>
 
 ```
 
-通过bar chart可以发现大部分的associations的付费会员人数在100人以内而大约有十家association的付费会员超过200。According to the data, most of the associations 超过半数会员都是付费会员。Among the data set有两个异常值，which 2025年会员人数在100人以下却选择了“200+”的付费会员人数，这可能是错误的数据。
+The bar chart shows that most associations have fewer than 100 financial members, while approximately ten associations have more than 200 financial members. According to the data, more than half of the members in most associations are financial members.
+
+There are also two potential outliers in the dataset. These associations reported fewer than 100 total members in 2025 but selected “200+” for their number of financial members. This may indicate data entry errors and should be checked with the relevant associations if the data are used for further analysis.
 
 ```{r}
 gateway |>
@@ -374,7 +415,7 @@ gateway |>
 
 ```
 
-通过对比gateway和wave，可以发现“0-50”区间的占比明显减少了，整体分布变化不大。注意wave平台有14个association都没有填写此项，不能将频次直接对比
+The comparison between Gateway and WAVE shows that the proportion of associations in the “0–50” category has decreased, while the overall distribution remains relatively similar. However, 14 associations on the WAVE platform did not provide information for this question. Therefore, the frequencies between the two platforms should not be directly compared without considering the missing responses.
 
 ```{r}
 # 一起的
@@ -403,31 +444,37 @@ compare_financial_memb %>%
   labs(y = "Count",title = "Current Financial Member Distribution Across Gateway and WAVE Platforms")
 ```
 
-该图展示了在新旧平台共同的协会会员的当前财务会员（Financial Members）数量分布情况。会员规模被划分为 0–50、51–100、101–150、151-200、200+六个区间。
+This chart shows the distribution of current financial members among associations that are present on both the Gateway and WAVE platforms. Membership size was divided into six categories: 0–50, 51–100, 101–150, 151–200, and 200+ members.
 
-从整体来看，两个平台上的协会主要集中在较小规模会员区间。0–50 和 51–100 是最常见的会员规模，其中 Gateway 平台分别有约21个和19个协会，WAVE 平台则均为16个协会。相比之下，拥有 101–150 名会员的协会数量较少，两个平台均约为6个协会。
+Overall, associations on both platforms are mainly concentrated in the smaller membership categories. The 0–50 and 51–100 categories are the most common. On Gateway, approximately 21 and 19 associations fall into these two categories respectively, while WAVE has 16 associations in each category. In comparison, fewer associations have between 101 and 150 members, with approximately six associations on each platform.
 
-在较大规模协会方面，151-200两个平台都仅只有1个协会。而200+ 会员区间在 Gateway（12个）和 WAVE（10个）中也占有很大的比例，说明部分协会拥有较稳定且规模较大的会员基础。此外，WAVE 平台中有约10个协会没有填写相关内容，而 Gateway 平台几乎没有此类记录，这是由于WAVE是新平台，部分association的信息还没有完善。
+For larger associations, only one association on each platform has between 151 and 200 members. The 200+ category also represents a relatively large group, with 12 associations on Gateway and 10 on WAVE. This indicates that some associations have relatively large and established membership bases.
 
-对比两个平台的数据，由于新旧平台的member没有发生较大的变动，所以整体分布保持一致。在0-100和200+的区间的组织数量Gateway平台略多于WAVE平台，这有一部分可能也是WAVE平台信息不全导致的。
+In addition, approximately 10 associations on WAVE did not provide an answer to this question, while there were very few such records on Gateway. This may partly reflect the fact that WAVE is a newer platform and some association information has not yet been fully recorded.
 
-两个平台中，绝大多数协会的财务会员人数不超过100人。说明 Educators SA 的会员协会整体以小型组织为主。除了大量小型协会外，200+ 会员区间也有较多协会，而 101–200 区间数量明显较少。这表明协会规模可能呈现一定的两极化趋势：部分协会规模较小，而另一部分已经发展出较大的会员基础。
+Overall, the distribution remains relatively consistent between the two platforms, as there has not been a major change in membership size among associations that appear on both platforms. The number of associations in the 0–100 and 200+ categories is slightly higher on Gateway than on WAVE, which may partly be due to incomplete information on the WAVE platform.
 
-WAVE 平台中较高比例的 Unsure 回答意味着会员规模数据存在一定的不确定性。建议优先完善会员人数记录，以提高数据的可靠性。
+Across both platforms, the majority of associations have no more than 100 financial members, indicating that Educators SA's member associations are generally small organisations. At the same time, the 200+ category also contains a relatively large number of associations, while the number of associations in the 101–200 range is much smaller. This suggests that association size may show some degree of polarisation, with many smaller associations and another group with a relatively large membership base.
 
-##24-25年变化
+The relatively high number of “Unsure” responses on the WAVE platform also indicates some uncertainty around membership size data. Improving the accuracy and completeness of membership records should therefore be considered a priority.
+
+## Changes in Membership Size from 2024 to 2025
 
 ```{r}
+#| output: false
+
 mean(wave$number_members_2024, na.rm = TRUE)
 median(wave$number_members_2024, na.rm = TRUE)
 ```
 
 ```{r}
+#| output: false
+
 mean(wave$number_members_2025, na.rm = TRUE)
 median(wave$number_members_2025, na.rm = TRUE)
 ```
 
-均值增加了两倍多，while中位数从79上升到了85.说明各个association的会员人数总体上都有增长，并且原本比较大的association扩张速度非常快，带动了总体人数的激增。通过查看detail数据，可以看到members员工最多的association是Primary English Teaching Association
+The average membership size was approximately 135 in 2024, with a median of 77. In 2025, the average increased to approximately 321, while the median increased to 85. Compared with 2024, the average membership size more than doubled, while the median increased from 77 to 85. This suggests an overall increase in membership across associations.
 
 ```{r}
 wave_filled |>
@@ -436,16 +483,11 @@ wave_filled |>
   geom_text(aes(label = acronym), hjust = -0.2, size = 3)
 ```
 
-Primary English Teaching Association Australia（PETAA）which在2025年有5200名会员，断层领先，占总会员人数估计值的约28%。然而accoring to他在2024年登记的数量仅有200，实现了非常大的飞跃。经核实，这是由于该组织与政府部门达成合作，大量人员被自动注册成会员。
+The Primary English Teaching Association Australia (PETAA) had 5,200 members in 2025, considerably higher than other associations and accounting for approximately 28% of the estimated total membership. However, PETAA reported only 200 members in 2024, representing a very large increase within one year. This was confirmed to be related to a partnership with government departments, through which a large number of people were automatically registered as members.
 
-Leaders(ACEL)有4000名会员约占整体的21%。South Australian Science Teachers Association(SASTA)有超过1700名会员占据第三位，该组织相较于2024年会员数量略有增长，总体保持稳定。
+The Australian Council for Educational Leaders (ACEL) had approximately 4,000 members, accounting for around 21% of the total. The South Australian Science Teachers Association (SASTA) had more than 1,700 members, making it the third-largest association by membership size. Compared with 2024, SASTA's membership increased slightly and remained relatively stable overall.
 
-```{r}
-sum(wave_filled$number_members_2024)
-sum(wave_filled$number_members_2025)
-```
-
-## 人员增长趋势
+## Membership Growth Expectations
 
 ```{r}
 wave |>
@@ -453,12 +495,13 @@ wave |>
   geom_bar()
 ```
 
-大部分associations的人数都比较稳定。有12家组织表示他们的会员数量正在增长，while 10家正在减少。值得注意的是，Australian Council for Educational Leaders作为一家在2025年有4000名成员的大公司，他们也面临成员数量减少问题。
+Most associations reported relatively stable membership numbers. Twelve associations indicated that their membership was increasing, while 10 reported a decline.
 
-## 'Early Career' vs 'Pre Service'
+It is worth noting that the Australian Council for Educational Leaders (ACEL), which had approximately 4,000 members in 2025, also reported a decline in membership. This suggests that a large membership base does not necessarily mean that an association is experiencing membership growth.
+
+## Early Career and Pre-Service Membership
 
 ```{r}
-# 分开的
 # How many 'Early Career' or 'Pre Service' members do you have?
 compare_early_career <- bind_rows(
   gateway %>%
@@ -482,17 +525,19 @@ compare_early_career %>%
   labs(y = "Count",title = "Distribution of Early Career/Pre-Service Members Across Gateway and WAVE platforms")
 ```
 
-该图展示了 Gateway 和 WAVE 平台中协会拥有的 Early Career/Pre-Service Members 数量分布情况。
+The chart shows the distribution of Early Career and Pre-Service members across associations on the Gateway and WAVE platforms.
 
-从整体来看，大多数协会的 Early Career / Pre-Service 会员规模较小。两个平台中，0–10人区间均占绝对多数（Gateway 46个协会，WAVE 32个协会），远高于其他规模区间。拥有超过30名 Early Career / Pre-Service 会员的协会数量非常少。
+Overall, most associations have a relatively small number of Early Career or Pre-Service members. On both platforms, the 0–10 category accounts for the largest group, with 46 associations on Gateway and 32 on WAVE. This is considerably higher than the other membership categories. Very few associations have more than 30 Early Career or Pre-Service members.
 
-此外，WAVE 有18个没有提供这个信息的组织，while Gateway 有9个，显示部分协会对 Early Career 会员规模缺乏准确记录。
+There are also 18 associations on WAVE that did not provide information about their Early Career or Pre-Service membership, compared with nine on Gateway. This suggests that some associations may not have accurate or complete records of their Early Career and Pre-Service members.
 
-无论是 Gateway 还是 WAVE，大部分协会的 Early Career / Pre-Service 会员人数均不超过10人。这说明 Early Career 群体在许多协会中的占比较低，可能尚未成为协会会员结构中的主要组成部分。
+Across both Gateway and WAVE, most associations have no more than 10 Early Career or Pre-Service members. This indicates that Early Career and Pre-Service members represent a relatively small group within the membership structure of many associations and may not yet be a major part of their overall membership.
 
-虽然数量不多，但仍有部分协会拥有 31–50 或 51–100 名 Early Career 会员，说明某些协会已经建立了较成熟的 Early Career 参与机制。这些协会的做法值得进一步研究和推广。
+Although relatively uncommon, some associations have between 31–50 or 51–100 Early Career or Pre-Service members. This suggests that some associations have developed stronger participation among these groups. The approaches used by these associations may be useful for further investigation and sharing of practices.
 
-WAVE 平台中约三分之一的协会无法明确提供 Early Career 会员数量（18个 Unsure），高于 Gateway 平台。这可能影响后续对青年会员参与情况的准确评估，也提示协会需要加强会员分类统计和记录管理。
+The WAVE platform has approximately one-third of associations unable to provide a clear number of Early Career or Pre-Service members, with 18 associations recorded as “Unsure”. This is higher than on Gateway. This may affect the accuracy of future assessments of participation among Early Career and Pre-Service members and highlights the need for stronger membership classification and record-keeping practices.
+
+## Membership Discounts for Early Career and Pre-Service Educators
 
 ```{r}
 compare_early_career_discount <- bind_rows(
@@ -517,43 +562,54 @@ compare_early_career_discount %>%
   labs(y = "Count",title = "")
 ```
 
-通过图表可以看出，大部分，which is 71.9%组织为'Early Career' or 'Pre Service'提供折扣。 通过对比gateway和wave的数据，发现offer a discounted membership to "Early Careers" or "Pre-Service"的association从45增加至了约60，while不提供的association略微减少。
+The data show that a large majority of associations, approximately 71.9%, offer discounted membership to Early Career or Pre-Service educators.
+
+When comparing Gateway and WAVE, the number of associations offering discounted membership increased from 45 to approximately 60, while the number of associations that do not offer a discount decreased slightly.
 
 ```{r}
+#| output: false
+
 gateway_tab <- table(
   common_member$`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?_gateway`, 
   common_member$`How many 'Early Career' or 'Pre Service' members do you have?_gateway`
 )
-
-gateway_tab
 ```
 
-```{r}
+```{r, eval=FALSE}
+#| output: false
+
 prop.table(gateway_tab)
 ```
 
-```{r}
+```{r, eval=FALSE}
+#| output: false
+
 wave_tab <- table(
   common_member$`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?_wave`, 
   common_member$`How many 'Early Career' or 'Pre Service' members do you have?_wave`
 )
 
-wave_tab
 ```
 
-```{r}
+```{r, eval=FALSE}
+#| output: false
+
 common_member %>%
   filter(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?_gateway` == "No" & `Do you offer a discounted membership to "Early Careers" or "Pre-Service"?_wave` == "Yes") %>%
   select(asso_name, `Do you offer a discounted membership to "Early Careers" or "Pre-Service"?_gateway`, `Do you offer a discounted membership to "Early Careers" or "Pre-Service"?_wave`, `How many 'Early Career' or 'Pre Service' members do you have?_gateway`, `How many 'Early Career' or 'Pre Service' members do you have?_wave`)
 ```
 
-```{r}
+```{r, eval=FALSE}
+#| output: false
+
 common_member %>%
   filter(`Do you offer a discounted membership to "Early Careers" or "Pre-Service"?_gateway` == "Yes" & `Do you offer a discounted membership to "Early Careers" or "Pre-Service"?_wave` == "No") %>%
   select(asso_name, `Do you offer a discounted membership to "Early Careers" or "Pre-Service"?_gateway`, `Do you offer a discounted membership to "Early Careers" or "Pre-Service"?_wave`, `How many 'Early Career' or 'Pre Service' members do you have?_gateway`, `How many 'Early Career' or 'Pre Service' members do you have?_wave`)
 ```
 
-在两个数据集共同的33个会员中，有三家association(Modern Greek Language Teachers Association of South Australia) 曾经不为"Early Careers" 和 "Pre-Service"提供折扣而现在提供折扣。有两家association曾经对"Early Careers" 和 "Pre-Service"有折扣而现在不折扣
+Among the 33 associations that appear in both datasets, three associations changed from not offering a discount to offering one. Two associations changed in the opposite direction, moving from offering a discount to no longer offering a discount.
+
+## Services for Early Career and Pre-Service Educators
 
 ```{r, eval=FALSE}
 # LLM
@@ -593,22 +649,28 @@ bind_rows(pre_data, early_data) %>%
   theme(axis.text.x = element_text(angle = 60, hjust = 1))
 ```
 
-可以观察到两个群体有一些共同点。Both两个群体，有超过十家公司提到给他们提供了professional development和training相关的服务。这说明协会如果针对这两个群体提供服务，比较倾向于通过培训、职业发展和专业能力提升来支持他们。
+The services offered to Early Career and Pre-Service Educators show several common themes. More than 10 associations in both groups mentioned Professional Development and Training. This suggests that when associations provide specific services for these groups, they commonly focus on training, professional development, and improving professional skills.
 
-Events & Conferences 也比较稳定，是经常被提到的新手福利之一。会议和活动可能是协会连接学生教师/职初教师的重要方式。
+Events and Conferences were also relatively consistent and were frequently mentioned as a benefit for both groups. Conferences and events may provide an important way for associations to connect with Pre-Service and Early Career Educators and provide opportunities for professional learning.
 
-值得注意的是Membership & Fee Support 在 Pre-Service Educators 中明显更多。这可能说明协会更倾向于通过优惠会员费、会员支持等方式吸引或支持准教师进入专业协会。对于 Pre-Service Educators 来说，降低会员成本可能是协会提供支持的重要方式。
+A notable difference is that Membership and Fee Support was mentioned more frequently for Pre-Service Educators. This may indicate that associations are more likely to use discounted membership fees and membership support to encourage or support Pre-Service Educators to join professional associations. For Pre-Service Educators, reducing the cost of membership may therefore be an important form of support.
 
-相反，Networking & Community Support 在 Early Career Educators 中更突出。这可能反映出职初教师进入职业阶段后，也许对建立职业网络、同行交流和专业社区的需求更加明显。
+In contrast, Networking and Community Support was more prominent among Early Career Educators. This may reflect the different needs of educators who have already entered the profession, including opportunities to build professional networks, connect with peers, and participate in professional communities.
 
-部分组织提到了Mentoring ，但是比例较低。说明 mentoring 目前并不是协会最普遍提供的服务。此外被提到的帮助服务还有Career and Employment Support, Classroom&Practical Support等。值得提到的是。在“Ohter/Unclear”中包含的大多是填写了Yes但没写具体内容的组织。
+Some associations also mentioned Mentoring, although this was less common. This suggests that mentoring is currently not one of the most widely offered services across associations. Other forms of support mentioned included Career and Employment Support and Classroom and Practical Support.
+
+The “Other/Unclear” category mainly includes organisations that answered “Yes” but did not provide further details about the specific service offered.
 
 ```{r}
+#| output: false
+
 wave |>
   filter(`How many 'Early Career' or 'Pre Service' members do you have?` == "51-100")
 ```
 
-#活动举办
+# Events and Activities
+
+## Event Types
 
 ```{r, eval=FALSE}
 # LLM
@@ -644,7 +706,11 @@ LLM_wave_eve_classified |>
 
 ```
 
-最常举办的活动形式是Professional learning / Workshops和Conferences。Online / Hybrid events占比很少，大约只占11%。除了常规的学习相关的活动，还有一些Networking / Community events活动和Competitions也会被举办。说明大部分组织组织的活动，不仅意在致力于提升教学技能能力，也把教师之间的互相交流学习作为主要目标之一。
+The most commonly organised event types are Professional Learning / Workshops and Conferences. Online / Hybrid Events account for a relatively small proportion, at approximately 11%. In addition to regular professional learning activities, some associations also organise Networking / Community Events and Competitions.
+
+This suggests that most associations organise events not only to improve teaching knowledge and professional skills, but also to provide opportunities for members to communicate, connect, and learn from each other.
+
+## Event Locations
 
 ```{r}
 LLM_wave_eve_classified |>
@@ -658,9 +724,13 @@ LLM_wave_eve_classified |>
 
 ```
 
-这张柱状图展示了不同活动场所被提及的频次。It is obvivous school是举办活动最常用的地方，被提及超过30次。Universites作为高等教育机构也被提及9次。Community 等 Public 场所（15次）和Training centres（17次）等教育相关的场所也是比较常被选择的举办活动的场所。有九个associations也会选择conference Venues比如hotels。Online活动也有九次被提及。仅有一家协会提到他们会在他们的专用设施举办活动。
+The bar chart shows the frequency with which different event locations were mentioned. Schools are clearly the most commonly used location, with more than 30 mentions. Universities, as higher education institutions, were mentioned nine times. Other education-related or public locations, such as Community venues (15 mentions) and Training Centres (17 mentions), were also commonly used.
 
-assciations举办活动的地点是比较丰富的，学校、university等教育机构被认为是协会举办活动的首选，其次还有training centres，community和hotels等场所也是协会们常用的选择。有些协会会举办线上活动，但占比不多约11%。只有极少数协会有专门举办活动的facilities。
+Nine associations reported using Conference Venues, such as hotels, for their events. Online events were also mentioned nine times. Only one association reported using its own dedicated facilities to host events.
+
+Overall, associations use a relatively wide range of locations for their events. Schools and universities are the most common choices, followed by Training Centres, Community venues, and Conference Venues such as hotels. Some associations also organise online events, but these remain relatively uncommon, accounting for approximately 11% of the mentions. Only a very small number of associations have dedicated facilities for hosting events.
+
+## Event Type Diversity
 
 ```{r}
 event_diversity <- LLM_wave_eve_classified |>
@@ -675,7 +745,9 @@ ggplot(event_diversity,
   labs(title = "Number of Event Types per Association", x="Number of Event Types", y="Count of Associations")
 ```
 
-超过一半的协会（约27个）只举办1种类型的事件。这说明大部分协会的业务聚焦度极高，或者资源/能力有限，无法覆盖多种活动类型，但是也有一定可能是由于members在填写survey的时候只写了最常用的Event Type。2种类型的协会（约12个）反而少于3种类型的协会（约18个）。仍有较高比例的协会有比较丰富的活动类型，但是活动类型有四种的协会仅有不到五家，占6.6%。这说明高度多元化的协会非常稀缺，可能是受限于人力、资金或专业能力。
+More than half of the associations, approximately 27, organise only one type of event. This may indicate that many associations have a relatively focused event offering or have limited resources and capacity to provide a wider range of activities. However, it is also possible that some associations only reported the event type they use most frequently in the survey.
+
+Approximately 12 associations organise two types of events, compared with around 18 associations that organise three types. This indicates that a relatively large proportion of associations offer a wider range of activities. However, fewer than five associations organise four types of events, accounting for only 6.6% of the sample. This suggests that highly diverse event offerings are relatively uncommon and may be affected by limitations in staffing, funding, or professional capacity.
 
 ```{r}
 event_type_by_diversity <- LLM_wave_eve_classified |>
@@ -700,13 +772,15 @@ ggplot(event_type_by_diversity,aes(x = factor(n_event_types),y = pct,fill = `Cla
 
 ```
 
-这张图展示了不同活动丰富程度的协会组织不同event types的占比。在不同丰富度的协会中，Professional learning events都是他们举办活动最主要的部分。尤其是对于一种和两种events type的协会来说，占据了超过70%。
+The following chart shows the proportion of different event types organised by associations with different levels of event diversity. Across all levels of diversity, Professional Learning Events remain the main type of activity. This is particularly clear among associations offering only one or two event types, where Professional Learning Events account for more than 70% of their activities.
 
-而随着活动种类越来越丰富，Coummunity events逐渐成为了协会举办活动中的重要组成部分，从极低的占比（约3%）猛增到了约20%。说明当协会有余力增加更多种的活动时，首选是社交类活动，增强会员之间的联系与社区建设。
+As the number of event types increases, Community Events gradually become a more important part of the overall event mix. Their share increases from approximately 3% to around 20%. This may suggest that when associations have greater capacity to expand their event offerings, they may also introduce more social and community-based activities to strengthen connections between members.
 
-当活动种类从2种再进一步丰富到三种和四种，Presentations/Seminars和Online/Hybird events的占比都有明显增加，成为了活动类型的重要组成部分之一。此外special events比如Competitions的占比也略有上涨，但仍然是占比最少的活动。随着活动越来越丰富，不同活动类型的占比也越来越均匀。综合上述发现，在活动多元化的协会中，在基础的教育和会议活动之外，一部分选择增加 Presentations/Seminars来深挖专业内容，另一部分选择增加 Online/Hybird events突破线下活动限制，扩大成员参与范围。
+When event diversity increases from two to three or four types, Presentations / Seminars and Online / Hybrid Events also show a clear increase and become more important parts of the event mix. Special Events, such as Competitions, also increase slightly, although they remain the least common event type.
 
-## Frenqucy\*diversity
+Overall, as event offerings become more diverse, the distribution across different event types becomes more balanced. Among associations with more diverse event programs, some expand beyond basic professional learning and conference activities by adding Presentations / Seminars to provide more specialised content, while others introduce Online / Hybrid Events to overcome the limitations of face-to-face activities and reach more members.
+
+## Event Frequency and Diversity
 
 ```{r}
 event_type_by_frequency <- LLM_wave_eve_classified |>
@@ -734,21 +808,31 @@ ggplot(event_type_by_frequency,aes(x = `Classification - Professional Learning E
   theme_minimal()
 ```
 
-According to this heatmap，活动的举办频率整体呈现出较为明显的集中趋势，大多数 Association 每年举办 2–5 场活动，约占全部的 72%。随着活动数量增加，Association 的比例逐渐下降，而每年举办超过 20 场的仅有 3 家（约 5%）。这表明大多数 Association的活动频率维持在五个以内，但同时存在少数活动举办频率明显较高的 Association。
+According to the heatmap, event frequency is relatively concentrated. Most associations organise between 2 and 5 events per year, accounting for approximately 72% of the sample. The proportion of associations gradually decreases as the number of events increases, with only three associations, approximately 5%, organising more than 20 events per year.
 
-这张热力图进一步展示了不同活动举办频率与活动类型之间的关系。从整体来看，无论协会每年举办多少场活动，Professional Learning 和 Conferences 始终是最核心的活动形式，与之前结论一致。
+This indicates that most associations organise no more than five events each year, while a small number of associations have a much higher level of event activity.
 
-在样本量最大的2-5场活动组中，Professional Learning / Workshops（39.7%） 和 Conferences （26.0%）占据主要地位，两者合计超过六成，说明专业学习与会议仍然是协会开展活动的核心形式。 Networking / Community Events（16.4%）也占据一定比例，表明部分协会除了专业发展之外，也重视会员之间的交流与联系。
+The heatmap also shows the relationship between event frequency and event type. Overall, regardless of how many events an association organises each year, Professional Learning and Conferences remain the core event types, consistent with the earlier findings.
 
-在5-10场活动组中，活动结构相对更加均衡。除了 Professional Learning /Workshops (17.4%) 和 Conferences（21.7%）之外，Online / Hybrid Events(26.1%), Presentations / Seminars （21.7%）等活动类型占有相近比例，说明部分活动举办较频繁的协会会采用更多元的活动形式，而不仅局限于传统的工作坊或会议。
+Among associations organising 2–5 events per year, which is the largest group, Professional Learning / Workshops account for 39.7% and Conferences account for 26.0%. Together, these two categories represent more than 60% of the events. This shows that professional learning and conferences remain the main forms of activity. Networking / Community Events also account for 16.4%, indicating that some associations place importance on member communication and connections in addition to professional development.
 
-结合热力图中 Online /Hybrid Events在高频协会中的较高占比，可以推测线上活动的采用更多出现在组织能力较强、活动举办较频繁的协会中。对于活动数量较少的协会而言，线下活动可能仍然是主要形式。这意味着部分协会可能仍面临技术能力、人员配置或线上活动经验不足的问题。
+Among associations organising 5–10 events per year, the event structure is more balanced. In addition to Professional Learning / Workshops (17.4%) and Conferences (21.7%), Online / Hybrid Events (26.1%) and Presentations / Seminars (21.7%) account for similar proportions. This suggests that some associations with more frequent activities also use a wider range of event formats rather than relying mainly on traditional workshops and conferences.
 
-无论从活动丰富程度分析还是从活动频率分析来看，Networking /Community Events 都是协会活动的重要组成部分。尤其是在活动频次高的associations中，Community Events随着协会活动规模扩大或活动类型增多，其重要性明显上升。 这说明协会在满足会员基本专业学习需求之后，往往会进一步关注会员之间的交流合作、社区建设以及职业网络拓展。换言之，协会的发展路径似乎是从知识传递逐步扩展到社区连接。
+The relatively high proportion of Online / Hybrid Events among associations with higher event frequency may suggest that online activities are more commonly used by associations with greater organisational capacity or more frequent event programs. For associations organising fewer events, face-to-face activities remain more common. This may indicate that some associations still face challenges related to technology, staffing, or experience in organising online activities.
 
-综合来看，目前大部分协会已经能够稳定提供专业学习相关活动，但活动形式仍相对集中。那些活动频率较高、活动种类较丰富的协会则展现出更加成熟的发展模式，不仅举办专业学习活动，还积极开展线上活动、专题讲座以及社区交流活动。因此，Educators SA 可以考虑发挥平台和资源整合作用，帮助协会突破传统活动模式。例如，可以建立活动案例分享机制，让活动举办经验丰富的协会分享线上活动组织、社区活动运营以及多元化活动设计的实践经验。同时可以提供场地资源、活动策划模板或联合举办机会，降低中小型协会尝试新活动形式的成本。 这样既有助于提升协会活动的丰富度，也能够进一步增强会员参与度和协会之间的协作联系，从而推动整个协会网络的发展。
+Across both event diversity and event frequency, Networking / Community Events are an important part of association activities. In particular, Community Events become more prominent as the scale of activities or the number of event types increases. This suggests that after meeting members' basic professional learning needs, associations may place greater emphasis on communication, collaboration, community building, and professional networking.
 
-#广告受众
+In other words, the development of association activities may move from knowledge sharing towards broader community connection as the range and scale of activities increase.
+
+Overall, most associations are able to provide regular professional learning activities, but their event offerings remain relatively concentrated. Associations with higher event frequency and greater event diversity show a broader range of activities, including online events, specialised presentations, and community activities.
+
+Educators SA could consider using its platform and resources to help associations explore different event formats. For example, an event practice-sharing mechanism could allow associations with more experience to share approaches to online event organisation, community event management, and diverse event design. Educators SA could also provide access to venues, event planning templates, or opportunities for joint events to reduce the cost and effort for smaller associations when trying new event formats.
+
+These approaches could help increase the diversity of association activities while also supporting member participation and collaboration across associations.
+
+# Member Recruitment and Communication
+
+## Target Members
 
 ```{r}
 LLM_wave_eve_classified |>
@@ -759,7 +843,11 @@ LLM_wave_eve_classified |>
   theme(axis.text.x = element_text(angle = 60, hjust = 1))
 ```
 
-Among 61名members中, 超过50个members认为Educators and Professional Practitioners是它们的target members，占整体的大约82%。是最主要的target members群体，此外经常被提及的target members还有Leaders / Senior Professionals和Students / Pre-service / Early Career。有大约20% of them 以Schools / Organisations / Services这类组织作为受众。
+Among the 61 associations, more than 50 identified Educators and Professional Practitioners as their target members, accounting for approximately 82% of the sample. This was the most commonly identified target group. Other frequently mentioned target groups included Leaders / Senior Professionals and Students / Pre-Service / Early Career members.
+
+Approximately 20% of associations also identified Schools / Organisations / Services as target audiences.
+
+## Membership Categories
 
 ```{r}
 LLM_wave_eve_classified |>
@@ -770,7 +858,13 @@ LLM_wave_eve_classified |>
   theme(axis.text.x = element_text(angle = 60, hjust = 1))
 ```
 
-超过40个协会会员不仅有Individual / Full membership，也有面向组织（such as school等）的membership类型。面向学生和pre-service的人的membership也是主要的会员类型之一。 值得注意的是，many of them 为students和pre-service提供专门的membership类型，远多于提供early career的associate。也有20家association提供了Retired / Life / Honorary membership这种类型。综上，these association的会员种类主要是按会员的类型（个人/组织）和职业阶段来区分的。
+More than 40 associations offer not only Individual / Full Membership but also membership types for organisations, such as schools. Membership categories for Students and Pre-Service members were also common.
+
+It is worth noting that many associations provide specific membership categories for Students and Pre-Service members, which is much more common than providing a specific category for Early Career members. Around 20 associations also offer Retired / Life / Honorary Membership.
+
+Overall, membership categories are mainly differentiated by the type of member, such as individuals or organisations, and by members' career stage.
+
+## Member Advertising and Recruitment Channels
 
 ```{r}
 LLM_wave_eve_classified |>
@@ -781,7 +875,9 @@ LLM_wave_eve_classified |>
   theme(axis.text.x = element_text(angle = 60, hjust = 1))
 ```
 
-在会员宣传方面，Email / Direct mail / Newsletter和Social media / Digital platforms是最常被使用的两种广告方式。Events / Professional learning和Member / Professional networks & Partnerships和Website / Online presence也是常被使用来吸引members的方式。此外Direct outreach / Institutional contacts和Program / Renewal-based recruitment也被提及用于广告宣传，但是只有很少部分of them使用。
+For member recruitment, Email / Direct Mail / Newsletter and Social Media / Digital Platforms are the two most commonly used channels. Events / Professional Learning, Member / Professional Networks & Partnerships, and Website / Online Presence are also frequently used to attract members.
+
+Direct Outreach / Institutional Contacts and Program / Renewal-based Recruitment were also mentioned, but only by a small number of associations.
 
 ```{r}
 wave_growth <- wave %>%
@@ -837,15 +933,19 @@ target_adv_count %>%
   )
 ```
 
-对于professional practitioners，Social media (24.8%) 和 Email （22.2%） 占据前两名，是最主要的宣传方式。Professional networks & Partnerships (18.8%) ， Professional learning Events (17.9%）也是主要的adverting方式之一，其次是website（10.3%）。也有少量公司选择用Insititutional contacts（2.6%） 和 Renewal-based recruitment （3.4%）作为宣传方式。
+For Professional Practitioners, Social Media (24.8%) and Email (22.2%) are the two most commonly used recruitment channels. Professional Networks & Partnerships (18.8%) and Professional Learning Events (17.9%) are also important channels, followed by Websites (10.3%). Only a small number of associations use Institutional Contacts (2.6%) or Renewal-based Recruitment (3.4%).
 
-对于senior professionals和早期职业者，他们的分布也和professional practitioners相似，主要以Social media和Email是主导，professional learning Events和Professional networks为补充。
+The pattern is similar for Senior Professionals and Early Career members. Social Media and Email are the main channels, while Professional Learning Events and Professional Networks are used as additional recruitment methods.
 
-对于individual members群体，协会采用的是数字大众广播和行业人脉/活动的组合形式。数字渠道负责覆盖，人脉和活动负责转化。一对一的直接触达和renewal-based recruitment极少被使用。对于不同阶段的individual members，associations也几乎不做出差异化的宣传策略。
+For Individual Members, associations mainly use a combination of digital channels and professional networks or events. Digital channels provide broad reach, while professional networks and events may provide opportunities for engagement and conversion. Direct one-to-one outreach and renewal-based recruitment are rarely used.
 
-对于学校及其他组织类目标群体，Email （30.8%）和 Social Media （23.1%）仍然是最主要的宣传渠道，与面向个人会员群体的宣传模式整体较为相似。相比其他目标群体，Website 的使用比例略高（19.2%），说明部分协会在面向组织时更倾向于依赖官方网站等正式信息渠道进行宣传。从整体分布来看，不同目标群体之间的广告渠道组合存在一定共性，大多数协会均以 Email 和 Social Media 为核心渠道，并辅以专业网络和活动推广。虽然Website 在组织类群体中的重要性有所提升，但目前尚未观察到非常明显的受众细分或高度差异化的宣传策略。
+There is also limited differentiation in advertising strategies across different career stages of individual members. Associations tend to use similar channels for Professional Practitioners, Senior Professionals, and Early Career members.
 
-# 与edsa的合作
+For schools and other organisational target groups, Email (30.8%) and Social Media (23.1%) remain the main recruitment channels, showing a similar overall pattern to individual member recruitment. However, Websites are used more frequently for this group (19.2%). This may indicate that some associations rely more on formal information channels, such as their websites, when communicating with organisations.
+
+Overall, there are some common patterns in recruitment channels across different target groups. Most associations rely on Email and Social Media as core channels, supported by professional networks and event promotion. Although Websites appear to be more important for organisational target groups, there is currently limited evidence of highly differentiated recruitment strategies for different audiences.
+
+# Association–Educators SA Relationship
 
 ```{r, eval=FALSE}
 # LLM
@@ -860,7 +960,7 @@ write.csv(LLM_wave_rest, "data/LLM_wave_rest.csv")
 LLM_wave_rest_classified <- read_csv("data/LLM_wave_rest_classified.csv")
 ```
 
-## advocacy & biggest threats
+## Advocacy Issues and Organisational Threats
 
 ```{r, eval=FALSE}
 # LLM
@@ -903,19 +1003,23 @@ compare_threat %>%
   labs(y = "Count",title = "Advocacy Issue vs Threats Category")
 ```
 
-在 Advocacy Issue 方面，Subject/Program Sustainability & Quality（12次）是最受关注的议题，其次为 Access, Equity & Inclusion（9次）、Education Policy, Curriculum & Standards（9次）以及 Workforce & Staffing（8次）。这些结果反映出协会普遍关注教育质量、教育公平以及教师队伍建设等核心教育议题。
+For Advocacy Issues, Subject / Program Sustainability & Quality was the most frequently mentioned category, with 12 mentions. This was followed by Access, Equity & Inclusion (9 mentions), Education Policy, Curriculum & Standards (9 mentions), and Workforce & Staffing (8 mentions).
 
-在 Threats Category 方面，其后依次为 Membership & Engagement（15次）和 Workforce & Staffing（12次），说明协会最主要的担忧集中在会员参与度下降、会员维持以及人力资源短缺等组织可持续发展问题上。
+These results show that associations commonly focus their advocacy efforts on issues related to education quality, educational equity, and the education workforce.
 
-协会关注的倡议议题与面临的威胁存在明显差异。协会在对外倡议时更多关注教育体系层面的议题，例如 Subject/Program Sustainability & Quality、Access, Equity & Inclusion 和 Education Policy, Curriculum & Standards；而在讨论威胁时，则更多聚焦于组织运营层面的问题，如 Membership & Engagement、Workforce & Staffing 和 Organisational Governance & Capacity。这表明协会希望推动教育领域的发展，但实际面临的挑战更多来自自身组织能力和会员基础的维持。
+For Threat Categories, Membership & Engagement was the most frequently mentioned category, with 15 mentions, followed by Workforce & Staffing (12 mentions). This indicates that associations' main concerns often relate to organisational sustainability, including declining member engagement, member retention, and workforce shortages.
 
-Membership & Engagement 是最突出的组织风险。该类别在 Threats 中出现15次，但在 Advocacy Issues 中仅出现6次。这说明会员招募、会员留存及会员参与度是协会当前最普遍的挑战之一，但尚未被广泛视为需要对外倡议解决的问题，更可能属于内部管理和运营问题。
+There is a clear difference between the issues associations focus on in their advocacy and the threats they face internally. Advocacy Issues are more focused on education-sector issues, such as Subject / Program Sustainability & Quality, Access, Equity & Inclusion, and Education Policy, Curriculum & Standards. In contrast, the reported threats are more focused on organisational issues, such as Membership & Engagement, Workforce & Staffing, and Organisational Governance & Capacity.
 
-Workforce & Staffing 同时是重要议题和重要威胁。该类别在 Advocacy Issues（8次）和 Threats Category（12次）中均排名靠前，显示教师和教育工作者的人力资源问题不仅影响协会自身运作，也被视为整个教育行业的重要挑战。这可能是未来跨协会合作和联合倡议的重要方向。
+This suggests that while associations seek to contribute to broader developments in education, many of the challenges they face in practice are related to maintaining their membership base and organisational capacity.
 
-协会在倡议层面主要关注教育质量、公平与政策等行业发展议题，而在风险层面则更担忧会员参与度下降、人员配置不足及组织能力建设问题。
+Membership & Engagement is the most frequently reported organisational risk. It appeared 15 times in the Threats category but only six times in Advocacy Issues. This indicates that member recruitment, retention, and engagement are common challenges for associations, but they are less frequently identified as issues requiring external advocacy. They may therefore be more commonly treated as internal management and operational issues.
 
-## What Associations Contribute vs What They Expect from Educators SA
+Workforce & Staffing is important in both areas. It appeared eight times in Advocacy Issues and 12 times in Threat Categories. This indicates that workforce-related issues affect both association operations and the wider education sector. This could be an area where associations may have opportunities for cross-association collaboration and joint advocacy.
+
+Overall, associations' advocacy efforts mainly focus on education quality, equity, and policy issues, while their organisational concerns are more focused on member engagement, staffing, and organisational capacity.
+
+## What Associations Can Contribute and What They Expect from Educators SA
 
 ```{r}
 compare_contribute <- bind_rows(
@@ -941,40 +1045,89 @@ compare_contribute %>%
   labs(y = "Count",title = "What Associations Contribute vs What They Expect from Educators SA")
 ```
 
-在 Association Can Contribute 方面，Specialist Expertise & Perspectives（18次）是协会认为自己最能提供价值的领域，其次为 Advocacy & Collective Voice（16次）、Organisational Support & Capacity（16次）以及 Networking & Support & Collaboration（14次）。这反映出协会普遍将自身定位为专业知识输出者、集体发声代表以及组织支持提供者。
+For Association Can Contribute, Specialist Expertise & Perspectives was the most frequently identified category, with 18 mentions. This was followed by Advocacy & Collective Voice (16 mentions), Organisational Support & Capacity (16 mentions), and Networking & Support & Collaboration (14 mentions).
 
-在 Association Wants 方面，Networking & Support & Collaboration（31次）远远领先于其他类别，其次为 Information & Knowledge（16次）、Governance & Administration（15次）以及 Advocacy & Collective Voice（13次）。这说明会员对 Educators SA 最核心的期待，集中在网络连接与协作支持、信息知识获取以及治理层面的协助上。
+These results indicate that associations commonly see their own role as providing professional knowledge and expertise, contributing to collective advocacy, and supporting organisational development.
 
-协会认为自己能贡献的内容与会员实际期待之间存在明显落差。协会更倾向于强调自身在专业知识（Specialist Expertise & Perspectives）和倡议发声（Advocacy & Collective Voice）方面的价值；而会员的期待则更集中在网络协作（Networking & Support & Collaboration）、信息知识（Information & Knowledge）和治理支持（Governance & Administration）等更偏"日常支持与连接"性质的需求上。这表明协会的自我定位与会员的实际需求方向并不完全一致。
+For Association Wants, Networking & Support & Collaboration was the most frequently mentioned category, with 31 mentions. This was followed by Information & Knowledge (16 mentions), Governance & Administration (15 mentions), and Advocacy & Collective Voice (13 mentions).
 
-Networking & Support & Collaboration 是最突出的期待缺口。该类别在 Association Wants 中高达31次，几乎是所有类别中最高的，但在 Association Can Contribute 中仅为14次，差距达17次，是全表最大的落差。这说明会员对协作与联结支持的需求远超协会目前自认为能够提供的水平，是最需要优先补强的领域。
+This shows that associations' main expectations of Educators SA are concentrated on networking and collaboration, access to information and knowledge, and governance-related support.
 
-Advocacy & Collective Voice 与 Organisational Support & Capacity 同时是协会自认擅长且会员认可需要的领域。这两个类别在 Contribute与 Wants中均排名靠前，说明协会在集体发声和组织支持方面的定位与会员期待基本吻合，是协会现有优势可以持续巩固的方向。
+There is a noticeable difference between what associations believe they can contribute and what they expect from Educators SA. Associations place greater emphasis on their own professional expertise and advocacy role, while their expectations are more focused on networking, information, and governance support. This indicates that associations' self-perceived role and their expectations of Educators SA do not fully overlap.
 
-总体来看，协会在自我认知上更强调专业知识与倡议代表的角色，而会员实际最期待的是更基础、更持续的网络协作与信息支持；两者在"倡导代表"和"组织支持"方向上高度一致，但在"协作联结"这一核心需求上存在最大缺口，值得被重点关注。
+Networking & Support & Collaboration shows the largest difference between the two areas. It was mentioned 31 times under Association Wants but only 14 times under Association Can Contribute, resulting in a difference of 17 mentions. This indicates that collaboration and connection are particularly common areas of expectation, while fewer associations identified this as an area they can contribute to.
 
-#Advice
+Advocacy & Collective Voice and Organisational Support & Capacity are mentioned relatively frequently in both areas. This suggests that associations' existing roles in collective advocacy and organisational support are broadly aligned with the areas where support is also expected.
 
-问卷问题调整： 1、分开整理不同类型的会员，更好地了解会员的结构：有多少individual members？有多少组织或学校类型的会员？对于这些全国性组织，可以增加问题“南澳大利亚州的会员占其全国总会员的比例是多少？”
+Overall, associations tend to describe their own role in terms of professional expertise and advocacy, while their expectations of Educators SA are more focused on ongoing networking, collaboration, information, and organisational support. There is relatively strong alignment in advocacy and organisational support, while networking and collaboration show a larger difference between current contribution and expected support.
 
-可以通过询问"上一年到期会员中，续费的比例"来推测associations的members的未来趋势，而不是询问associations未来预期的人数这种比较主观的问题。
+# Recommendations
 
-2、询问组织活跃地。可以增加多选题问题“你们最活跃的州/城市是哪里？”由于部分组织没有具体位置地点，导致关于位置的信息缺失。这在了解组织地理分布，帮助组织协会之间的交流活动大有帮助。
+## Survey Design
 
-3、由于关于会员年龄结构问题有巨大的数据缺失问题，表明很多组织不了解他们的会员的年龄组成detail，建议删除这些问题，可以改成“哪个年龄段的会员最多”这样比较宽泛的问题。
+### Improve the Collection of Membership Structure Data
 
-4、"Do you offer any discounted memberships to Early Career Educators?"和 "Do you offer a discounted membership to "Early Careers" or "Pre-Service"?"问题重复，建议删除前一个
+Different types of members should be recorded separately to provide a clearer understanding of membership structure. For example, the survey could ask:
 
-5、由于组织们对组织间协作交流的需求，可以统计组织希望交流的领域（比如数学、艺术等），方便以后组织多个association的活动。
+How many Individual Members do you have? How many organisational or school members do you have?
 
-数据收集建议： 建议尽可能控制输入的内容，比如将人数问题的回答设置为仅可输入数字，将一些开放性问题设置成预设种类的单选或多选题，方便后续对数据进行分析，也能一定程度上降低members的思考压力，避免一些“What do you mean”或者与题目不相关的回答。
+For national organisations, an additional question could ask what proportion of their total national membership is based in South Australia. This would provide a clearer understanding of the size of their South Australian membership.
 
-一些问题比如询问events的频率，可以直接用预设的range作为选项。when精确的数据不是必要的，推荐使用range作为数据形式，因为按照目前的情况来看，有一部分associations填写时也没法确定精确的数值，使用了一些模糊的表述。使用合理的range作为输入在满足数据分析任务的同时，也一定程度上避免了这种情况。
+Instead of asking associations to predict their future membership numbers, the survey could ask for the proportion of members whose membership expired in the previous year and who subsequently renewed. This would provide a more measurable indicator for understanding future membership trends.
 
-同时也方便调整细节，比如EDSA想了解用户宣传广告时使用email进行宣传，是自己有面向members的邮件宣传，还是通过EDSA进行邮件宣传。可以设置两个选项“邮件”和“邮件（通过EDSA）”来帮助区分两种情况。在有预设回答的情况下，可以通过增加“Others”的选择，额外让会员能够填写没有提及的选项，确保数据完整性。
+### Collect More Information About Geographic Activity
 
-在数据分析的过程中我们发现，在平台迁移的过程中，原本在旧Gateway平台用户的Membership Number没有迁移到新平台上。且旧Gateway平台的ID存在一个association对应多个Membership Number的情况，这可能是由于该企业注册了两次，导致了有两个Membership Number。这样的情况也导致了在对比新旧数据、合并表格时，由于新旧平台assciation名称输入的误差，无法很好地合并数据。
+A multiple-choice question could be added to identify the states or cities where associations are most active, for example:
 
-综上，与其花时间校对assciations的名字，不如为assciations建立一个永久的专属ID，虽然可能在建立账户时可能会花费多一点的时间，但是在平台迁移、数据维护时非常有帮助，并且能在管理和分析数据时减少大量时间。
+“Which states or cities are your association most active in?”
 
-此外，现有的注册时一次性数据收集模式不利于了解associations的趋势信息，比如会员人数变动情况，可以尝试将survey分成注册时了解association情况的大survey和每年续费时更新数据的小survey。在确保趋势数据更新的同时，确保不会因为太多问题要填给members带来一些负担。
+Some associations did not provide specific location information, resulting in missing data in the current analysis. Collecting this information could provide a better understanding of the geographic distribution of association activities and could also support future collaboration and joint events between associations.
+
+### Simplify the Question About Member Age
+
+The question about member age distribution has a very high level of missing data. This suggests that many associations may not have detailed information about the age structure of their members.
+
+Rather than asking for detailed age distribution, the question could be simplified to something such as:
+
+“Which age group represents the largest proportion of your members?”
+
+A broader question would reduce the reporting burden while still providing useful information about the general age structure of association membership.
+
+### Remove Duplicate Survey Questions
+
+The questions “Do you offer any discounted memberships to Early Career Educators?” and “Do you offer a discounted membership to ‘Early Careers’ or ‘Pre-Service’?” are similar and may collect overlapping information.
+
+The first question could therefore be removed to reduce duplication in the survey.
+
+### Collect Information About Areas of Collaboration
+
+Given the strong demand for collaboration between associations, the survey could ask associations which areas they would be interested in collaborating on, such as Mathematics, Arts, English, or Science.
+
+This information could help Educators SA identify associations with similar interests and organise joint activities or events across multiple associations.
+
+## Data Collection
+
+Where possible, the format of survey responses should be more structured. For example, questions asking for membership numbers could be set to accept numerical values only. Some open-ended questions could also be changed into predefined single-choice or multiple-choice questions.
+
+This would make the data easier to analyse and reduce the effort required from members when completing the survey. It may also reduce unclear responses such as “What do you mean?” or answers that are not directly related to the question.
+
+For questions such as event frequency, predefined ranges could be provided as response options. When an exact number is not essential for the analysis, using ranges may be more appropriate. Some associations were unable to provide exact numbers and instead used approximate descriptions. Using suitable ranges would allow the information to remain useful for analysis while reducing the need for respondents to provide an exact figure.
+
+Structured response options could also improve the level of detail that can be obtained from the data. For example, if Educators SA wants to understand whether an association uses email to communicate with its members directly or through Educators SA, the survey could provide separate options such as “Email” and “Email (through Educators SA)”.
+
+At the same time, predefined response options should include an “Other” option where appropriate, allowing associations to provide information that is not covered by the predefined categories. This can help maintain data completeness while keeping the survey structured.
+
+During the analysis, it was found that Membership Numbers from the old Gateway platform were not transferred to the new WAVE platform. In addition, one association could have multiple Membership Numbers in the Gateway system, potentially because the organisation had registered more than once.
+
+These issues made it more difficult to compare the old and new datasets and merge records correctly. Differences in how association names were entered across the two platforms created additional matching problems.
+
+Instead of relying on association names for data matching, Educators SA could consider assigning each association a permanent unique ID. Although setting up a unique ID system may require some additional work when accounts are first created, it would make future platform migration, data maintenance, and analysis much easier. It would also reduce the time required to manually check and standardise association names.
+
+The current approach of collecting most information at registration does not provide enough information about changes over time, such as changes in membership size.
+
+One possible approach would be to divide the survey into two parts:
+
+- A larger survey at registration: collecting relatively stable information about the association, such as its membership structure, target members, services, and activities.
+- A smaller annual renewal survey: collecting information that changes over time, such as current membership numbers, membership changes, event activity, and other annual indicators.
+
+This approach would allow Educators SA to maintain trend data over time while reducing the amount of information associations need to provide each year. It may also reduce the reporting burden for associations and improve the consistency of annual data collection.
