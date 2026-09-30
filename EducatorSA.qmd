@@ -5,7 +5,7 @@ execute:
   echo: false
   warning: false
   message: false
-format: typst
+format: pdf
 editor: visual
 ---
 
@@ -26,11 +26,11 @@ wave <- read_excel("D:/Desktop/EducatorSA/WAVE_Educators SA_members_8_5_2026.xls
 gateway <- read_excel("D:/Desktop/EducatorSA/Gateway_exports_association_users_export.xlsx")
 ```
 
-# Data Cleaning and Preparation
+# 1. Data Cleaning and Preparation
 
 Before the main analysis, the WAVE and Gateway membership survey data were systematically cleaned and prepared to improve data quality and ensure the reliability of the subsequent analysis. After data cleaning, 67 Gateway records and 61 WAVE records were retained for further analysis. In addition, a combined dataset containing 59 common members was created to compare selected variables between the old and new platforms.
 
-## Data Filtering and Variable Preparation
+## 1.1 Data Filtering and Variable Preparation
 
 First, records that were not relevant to the research were removed. These included Educators SA (EDSA) records, administrator accounts, and test records. Personally Identifiable Information (PII), such as names, contact details, billing information, and social media links, was also removed because it was not relevant to the research questions. This reduced the complexity of the dataset and helped protect member privacy.
 
@@ -79,7 +79,7 @@ gateway <- gateway %>%
   select(-c(`Signup Time`))
 ```
 
-## Data Correction and Formatting
+## 1.2 Data Correction and Formatting
 
 Some associations reported their membership numbers using free-text responses, such as “Approx 200” and “Around 340 members”. These responses were converted into numerical values to support further analysis. Responses where the number could not be determined, such as “Not sure” and “Can’t log in to check”, were treated as missing values.
 
@@ -178,14 +178,19 @@ gateway |>
   filter(duplicated(gateway$acronym) == TRUE)
 ```
 
-## Missing Data Assessment
+## 1.3 Missing Data Assessment
 
 ```{r}
 wave |>
-  select(number_members_2024, number_members_2025) |>
+  rename(members_2024 = number_members_2024, 
+         members_2025 = number_members_2025) |>
+  select(members_2024, members_2025) |>
   vis_miss() + 
   theme(axis.text.x = element_text(vjust = 0.2))
 ```
+\begin{center}
+Figure1.3.1 The missing data situation for membership numbers in 2024–2025
+\end{center}
 
 The black sections in the missing-data visualisations show where data were unavailable. For the number of members, approximately 25% of the responses were missing for 2024, while approximately 17% were missing for 2025. Many associations provided membership numbers for only one of the two years.
 
@@ -202,7 +207,9 @@ gateway |>
 
 ```
 
-For member age distribution, more than approximately 80% of associations on both the Gateway and WAVE platforms did not provide information about the age distribution of their members. This suggests that many associations may not have detailed information about the age structure of their membership. Due to the limited amount of valid data, age distribution was excluded from the analysis.
+\begin{center}
+Figure1.3.2 The missing data situation for the age distribution on the Gateway platform
+\end{center}
 
 ```{r}
 wave |>
@@ -215,6 +222,14 @@ wave |>
   vis_miss() + 
   theme(axis.text.x = element_text(vjust = 0.2))
 ```
+
+\begin{center}
+Figure1.3.3 The missing data situation for the age distribution on the WAVE platform
+\end{center}
+
+These two figures show the missing data situation for the Gateway and WAVE platforms respectively. For member age distribution, more than approximately 80% of associations on both the Gateway and WAVE platforms did not provide information about the age distribution of their members. This suggests that many associations may not have detailed information about the age structure of their membership. Due to the limited amount of valid data, age distribution was excluded from the analysis.
+
+
 
 ```{r}
 wave <- wave |>
@@ -243,7 +258,7 @@ check_missing_gateway <- gateway |>
 check_missing_gateway
 ```
 
-## Missing Data Imputation
+## 1.4 Missing Data Imputation
 
 Membership size was an important indicator for this project, but some membership figures were missing. Approximately 25% of the 2024 membership figures and 17.2% of the 2025 figures were missing.
 
@@ -312,7 +327,7 @@ wave_filled <- wave %>%
 
 ```
 
-## Manual Data Validation and Platform Comparison
+## 1.5 Manual Data Validation and Platform Comparison
 
 Some association names were entered slightly differently in the Gateway and WAVE platforms. These differences prevented records belonging to the same association from being correctly matched when the datasets were merged. The association names were therefore manually checked and standardised across the two datasets.
 
@@ -366,8 +381,6 @@ leave_member <- anti_join(gateway, wave, by = "asso_name")
 common_member <- inner_join(gateway, wave, by = "asso_name", suffix = c("_gateway", "_wave"))
 ```
 
-New members:
-
 ```{r}
 new_member |>
   select(asso_name) |>
@@ -375,7 +388,9 @@ new_member |>
   kable()
 ```
 
-Leave members:
+\begin{center}
+Table 1.5.1 Names of new members
+\end{center}
 
 ```{r}
 leave_member |>
@@ -384,41 +399,19 @@ leave_member |>
   kable()
 ```
 
+\begin{center}
+Table 1.5.2 Names of leave members
+\end{center}
+
 A comparison of the old and new platform data identified four new associations that joined Educators SA. There were also eight associations with no data recorded in the WAVE platform. ACHPER (SA) remains an active member but had not registered on the new platform, while the other seven associations can be considered associations that have left Educators SA.
 
 Overall, the WAVE survey contains more comprehensive questions than the Gateway survey, but it also has a higher level of missing data in several areas. This may partly be related to the fact that WAVE is a newer platform and associations may still be adapting to the new system.
 
-# Membership Size and Trends
+# 2 Membership Size and Trends
 
-## Current Financial Membership
-
-```{r}
-wave |>
-  filter(!is.na(`How many current financial members do you have?`)) |>
-  ggplot(aes(x = `How many current financial members do you have?`)) +
-  geom_bar() + 
-  coord_cartesian(ylim = c(0,30))
-
-```
-
-The bar chart shows that most associations have fewer than 100 financial members, while approximately ten associations have more than 200 financial members. According to the data, more than half of the members in most associations are financial members.
-
-There are also two potential outliers in the dataset. These associations reported fewer than 100 total members in 2025 but selected “200+” for their number of financial members. This may indicate data entry errors and should be checked with the relevant associations if the data are used for further analysis.
+## 2.1 Current Financial Membership
 
 ```{r}
-gateway |>
-  filter(!is.na(`How many current financial members do you have?`)) |>
-  mutate(`How many current financial members do you have?` = factor(`How many current financial members do you have?`, levels = c("0-50", "51-100", "101-150", "151-200", "200+"))) |>
-  ggplot(aes(x = `How many current financial members do you have?`)) +
-  geom_bar() + 
-  coord_cartesian(ylim = c(0,30))
-
-```
-
-The comparison between Gateway and WAVE shows that the proportion of associations in the “0–50” category has decreased, while the overall distribution remains relatively similar. However, 14 associations on the WAVE platform did not provide information for this question. Therefore, the frequencies between the two platforms should not be directly compared without considering the missing responses.
-
-```{r}
-# 一起的
 # How many 'Early Career' or 'Pre Service' members do you have?
 compare_financial_memb <- bind_rows(
   common_member %>%
@@ -435,14 +428,17 @@ compare_financial_memb <- bind_rows(
   count(`How many current financial members do you have?`, Platform)
 
 compare_financial_memb %>%
-#  mutate(`How many current financial members do you have?` = fct_relevel(`How many current financial members do you have?`, "Unsure", after = Inf)) %>%
   mutate(`How many current financial members do you have?` = factor(`How many current financial members do you have?`, levels = c("0-50", "51-100", "101-150", "151-200",  "200+", "unsure"))) %>%
   ggplot(aes(x = `How many current financial members do you have?`, y = n, fill = Platform)) +
   geom_col(position = "dodge") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
-  labs(y = "Count",title = "Current Financial Member Distribution Across Gateway and WAVE Platforms")
+  labs(x = "the Numbers of Financial Members", y = "Count") 
 ```
+
+\begin{center}
+Figure 2.1: Current Financial Member Distribution Across Gateway and WAVE Platforms
+\end{center}
 
 This chart shows the distribution of current financial members among associations that are present on both the Gateway and WAVE platforms. Membership size was divided into six categories: 0–50, 51–100, 101–150, 151–200, and 200+ members.
 
@@ -458,7 +454,7 @@ Across both platforms, the majority of associations have no more than 100 financ
 
 The relatively high number of “Unsure” responses on the WAVE platform also indicates some uncertainty around membership size data. Improving the accuracy and completeness of membership records should therefore be considered a priority.
 
-## Changes in Membership Size from 2024 to 2025
+## 2.2 Membership Growth Trend
 
 ```{r}
 #| output: false
@@ -474,32 +470,37 @@ mean(wave$number_members_2025, na.rm = TRUE)
 median(wave$number_members_2025, na.rm = TRUE)
 ```
 
-The average membership size was approximately 135 in 2024, with a median of 77. In 2025, the average increased to approximately 321, while the median increased to 85. Compared with 2024, the average membership size more than doubled, while the median increased from 77 to 85. This suggests an overall increase in membership across associations.
+The average membership size was approximately 135 in 2024, with a median of 77. In 2025, the average increased to approximately 321, while the median increased to 85. Compared with 2024, the average membership size more than doubled, while the median increased from 77 to 85. The increase in average membership size was largely driven by a small number of very large associations, while the median membership size increased only modestly.
 
 ```{r}
 wave_filled |>
   ggplot(aes(x = number_members_2024, y = number_members_2025)) + 
   geom_point() + 
-  geom_text(aes(label = acronym), hjust = -0.2, size = 3)
+  geom_text(data = subset(wave_filled, acronym %in% c("PETAA", "ACEL", "SASTA", "DATTA SA", "HEIA(SA)")), aes(label = acronym), hjust = -0.2, size = 3) + 
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed") + 
+  labs(x = "Number of members in 2024", y = "Number of members in 2025")
 ```
 
-The Primary English Teaching Association Australia (PETAA) had 5,200 members in 2025, considerably higher than other associations and accounting for approximately 28% of the estimated total membership. However, PETAA reported only 200 members in 2024, representing a very large increase within one year. This was confirmed to be related to a partnership with government departments, through which a large number of people were automatically registered as members.
+\begin{center}
+Figure 2.2: Association Membership Size in 2024 and 2025
+\end{center}
 
-The Australian Council for Educational Leaders (ACEL) had approximately 4,000 members, accounting for around 21% of the total. The South Australian Science Teachers Association (SASTA) had more than 1,700 members, making it the third-largest association by membership size. Compared with 2024, SASTA's membership increased slightly and remained relatively stable overall.
+Figure 2.2 shows the distribution of association membership sizes in 2024 and 2025. The dashed line represents the reference line where the membership size was the same in both years. The distribution is highly skewed, with a small number of very large associations and a large number of smaller associations.
 
-## Membership Growth Expectations
+Several associations show notable changes in membership size. The Primary English Teaching Association
+Australia (PETAA) had 5,200 members in 2025, considerably more than any other association and accounting for approximately 28% of the estimated total membership. lowever, PETAA reported only 200 members in 2024, representing a substantial increase within one year.
+This large increase was confirmed to be related to a partnership with government departments, through which a large number of people were automatically registered as members.
 
-```{r}
-wave |>
-  ggplot(aes(x = `Was that an increase, decrease or stable number?`)) + 
-  geom_bar()
-```
+The Design and Technology Teachers
+Association of SA (DATTA SA) also experienced a substantial increase in membership, from 77 members in 2024 to 700 in 2025. The Australian Council for Educational Leaders (ACEL) had approximately 4,000 members in 2025, accounting for around 21% of the estimated total membership. However, the 2024 membership figure for ACEL was an imputed value and therefore should not be used for comparison. The South Australian Science Teachers Association (SASTA) had more than 1,700 members in 2025, making it the third-largest association by membership size. 
 
-Most associations reported relatively stable membership numbers. Twelve associations indicated that their membership was increasing, while 10 reported a decline.
+SASTA and the Health and Education Institute of Australia (SA) (HEIA (SA)) showed relatively stable membership numbers, with small increases between the two years.
 
-It is worth noting that the Australian Council for Educational Leaders (ACEL), which had approximately 4,000 members in 2025, also reported a decline in membership. This suggests that a large membership base does not necessarily mean that an association is experiencing membership growth.
+Overall, most associations are relatively evenly distributed on both sides of the reference line, indicating that membership sizes varied between 2024 and 2025, with both increases and decreases observed. 
 
-## Early Career and Pre-Service Membership
+For the question "Was that an increase, decrease or stable number?", 39 associations reported stable membership numbers, while 12 reported an increase and 10 reported a decrease. Stable membership was the most common response, accounting for approximately 64% of associations. This further supports the finding above that membership sizes were relatively stable for most associations, despite some notable changes among individual associations.
+
+## 2.3 Early Career and Pre-Service Membership
 
 ```{r}
 # How many 'Early Career' or 'Pre Service' members do you have?
@@ -522,8 +523,12 @@ compare_early_career %>%
   geom_col(position = "dodge") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
-  labs(y = "Count",title = "Distribution of Early Career/Pre-Service Members Across Gateway and WAVE platforms")
+  labs(x = "Number of 'Early Career' or 'Pre Service' members", y = "Count")
 ```
+
+\begin{center}
+Figure 2.3: Distribution of Early Career/Pre-Service Members Across Gateway and WAVE platforms
+\end{center}
 
 The chart shows the distribution of Early Career and Pre-Service members across associations on the Gateway and WAVE platforms.
 
@@ -537,7 +542,7 @@ Although relatively uncommon, some associations have between 31–50 or 51–100
 
 The WAVE platform has approximately one-third of associations unable to provide a clear number of Early Career or Pre-Service members, with 18 associations recorded as “Unsure”. This is higher than on Gateway. This may affect the accuracy of future assessments of participation among Early Career and Pre-Service members and highlights the need for stronger membership classification and record-keeping practices.
 
-## Membership Discounts for Early Career and Pre-Service Educators
+## 2.4 Membership Discounts for Early Career and Pre-Service Educators
 
 ```{r}
 compare_early_career_discount <- bind_rows(
@@ -559,8 +564,12 @@ compare_early_career_discount %>%
   ggplot(aes(x = `Do you offer a discounted membership to "Early Careers" or "Pre-Service"?`, y = n, fill = Platform)) +
   geom_col(position = "dodge") +
   theme_minimal() +
-  labs(y = "Count",title = "")
+  labs(x = "Discounted Membership Offered?", y = "Count")
 ```
+
+\begin{center}
+Figure 2.4: If associations offer a discounted membership to "Early Careers" or "Pre-Service"
+\end{center}
 
 The data show that a large majority of associations, approximately 71.9%, offer discounted membership to Early Career or Pre-Service educators.
 
@@ -609,7 +618,7 @@ common_member %>%
 
 Among the 33 associations that appear in both datasets, three associations changed from not offering a discount to offering one. Two associations changed in the opposite direction, moving from offering a discount to no longer offering a discount.
 
-## Services for Early Career and Pre-Service Educators
+## 2.5 Services for Early Career and Pre-Service Educators
 
 ```{r, eval=FALSE}
 # LLM
@@ -645,9 +654,13 @@ bind_rows(pre_data, early_data) %>%
   mutate(Category = fct_relevel(Category, "Other/Unclear", after = Inf)) %>%
   ggplot(aes(x = Category, y = n, fill = Group)) + 
   geom_col(position = "dodge") + 
-  labs(title = "Comparison of Service Offerings Between Pre-Service and Early Career Educators", x = "Service Categories", y = "Count") + 
+  labs(x = "Service Categories", y = "Count") + 
   theme(axis.text.x = element_text(angle = 60, hjust = 1))
 ```
+
+\begin{center}
+Figure 2.5: Comparison of Service Offerings Between Pre-Service and Early Career Educators
+\end{center}
 
 The services offered to Early Career and Pre-Service Educators show several common themes. More than 10 associations in both groups mentioned Professional Development and Training. This suggests that when associations provide specific services for these groups, they commonly focus on training, professional development, and improving professional skills.
 
@@ -668,9 +681,9 @@ wave |>
   filter(`How many 'Early Career' or 'Pre Service' members do you have?` == "51-100")
 ```
 
-# Events and Activities
+# 3 Events and Activities
 
-## Event Types
+## 3.1 Event Types
 
 ```{r, eval=FALSE}
 # LLM
@@ -702,15 +715,19 @@ LLM_wave_eve_classified |>
   ggplot(aes(x = `Classification - Event Types`)) + 
   geom_bar() + 
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) + 
-  labs(title = "Distribution of Event Types by Classification", x = "Event Types", y = "Count")
+  labs(x = "Event Types", y = "Count")
 
 ```
+
+\begin{center}
+Figure 3.1: Distribution of Event Types by Classification
+\end{center}
 
 The most commonly organised event types are Professional Learning / Workshops and Conferences. Online / Hybrid Events account for a relatively small proportion, at approximately 11%. In addition to regular professional learning activities, some associations also organise Networking / Community Events and Competitions.
 
 This suggests that most associations organise events not only to improve teaching knowledge and professional skills, but also to provide opportunities for members to communicate, connect, and learn from each other.
 
-## Event Locations
+## 3.2 Event Locations
 
 ```{r}
 LLM_wave_eve_classified |>
@@ -720,9 +737,13 @@ LLM_wave_eve_classified |>
   ggplot(aes(x = `Classification - Event Locations`)) + 
   geom_bar() + 
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) + 
-  labs(title = "Distribution of Event Locations by Classification", x = "Event Locations", y = "Count")
+  labs(x = "Event Locations", y = "Count")
 
 ```
+
+\begin{center}
+Figure 3.2: Distribution of Event Locations by Classification
+\end{center}
 
 The bar chart shows the frequency with which different event locations were mentioned. Schools are clearly the most commonly used location, with more than 30 mentions. Universities, as higher education institutions, were mentioned nine times. Other education-related or public locations, such as Community venues (15 mentions) and Training Centres (17 mentions), were also commonly used.
 
@@ -730,7 +751,7 @@ Nine associations reported using Conference Venues, such as hotels, for their ev
 
 Overall, associations use a relatively wide range of locations for their events. Schools and universities are the most common choices, followed by Training Centres, Community venues, and Conference Venues such as hotels. Some associations also organise online events, but these remain relatively uncommon, accounting for approximately 11% of the mentions. Only a very small number of associations have dedicated facilities for hosting events.
 
-## Event Type Diversity
+## 3.3 Event Type Diversity
 
 ```{r}
 event_diversity <- LLM_wave_eve_classified |>
@@ -742,8 +763,12 @@ event_diversity <- LLM_wave_eve_classified |>
 ggplot(event_diversity,
        aes(x = n_event_types)) +
   geom_bar() + 
-  labs(title = "Number of Event Types per Association", x="Number of Event Types", y="Count of Associations")
+  labs(x="Number of Event Types", y="Count of Associations")
 ```
+
+\begin{center}
+Figure 3.3.1: Number of Event Types per Association
+\end{center}
 
 More than half of the associations, approximately 27, organise only one type of event. This may indicate that many associations have a relatively focused event offering or have limited resources and capacity to provide a wider range of activities. However, it is also possible that some associations only reported the event type they use most frequently in the survey.
 
@@ -772,6 +797,10 @@ ggplot(event_type_by_diversity,aes(x = factor(n_event_types),y = pct,fill = `Cla
 
 ```
 
+\begin{center}
+Figure 3.3.2: Distribution of Event Types by Number of Event Types
+\end{center}
+
 The following chart shows the proportion of different event types organised by associations with different levels of event diversity. Across all levels of diversity, Professional Learning Events remain the main type of activity. This is particularly clear among associations offering only one or two event types, where Professional Learning Events account for more than 70% of their activities.
 
 As the number of event types increases, Community Events gradually become a more important part of the overall event mix. Their share increases from approximately 3% to around 20%. This may suggest that when associations have greater capacity to expand their event offerings, they may also introduce more social and community-based activities to strengthen connections between members.
@@ -780,9 +809,10 @@ When event diversity increases from two to three or four types, Presentations / 
 
 Overall, as event offerings become more diverse, the distribution across different event types becomes more balanced. Among associations with more diverse event programs, some expand beyond basic professional learning and conference activities by adding Presentations / Seminars to provide more specialised content, while others introduce Online / Hybrid Events to overcome the limitations of face-to-face activities and reach more members.
 
-## Event Frequency and Diversity
+## 3.4 Event Frequency and Diversity
 
 ```{r}
+
 event_type_by_frequency <- LLM_wave_eve_classified |>
   separate_rows(`Classification - Event Types`, sep = "; ") |>
   filter(`Classification - Event Types` != "Unsure") |>
@@ -805,8 +835,17 @@ ggplot(event_type_by_frequency,aes(x = `Classification - Professional Learning E
     size = 3) +
   scale_fill_gradient(low = "white", high = "steelblue") +
   labs(x = "Professional Learning Event Frequency", y = "Event Type", fill = "% within\nFrequency Group") +
-  theme_minimal()
+  theme_minimal() + 
+  theme(
+    legend.position = "bottom",
+    axis.text.x = element_text(angle = 0),
+    panel.grid = element_blank()
+  )
 ```
+
+\begin{center}
+Figure 3.4: Professional Learning Event Types by Frequency
+\end{center}
 
 According to the heatmap, event frequency is relatively concentrated. Most associations organise between 2 and 5 events per year, accounting for approximately 72% of the sample. The proportion of associations gradually decreases as the number of events increases, with only three associations, approximately 5%, organising more than 20 events per year.
 
@@ -830,9 +869,9 @@ Educators SA could consider using its platform and resources to help association
 
 These approaches could help increase the diversity of association activities while also supporting member participation and collaboration across associations.
 
-# Member Recruitment and Communication
+# 4 Member Recruitment and Communication
 
-## Target Members
+## 4.1 Target Members
 
 ```{r}
 LLM_wave_eve_classified |>
@@ -840,14 +879,19 @@ LLM_wave_eve_classified |>
   mutate(`Classification - Target Members` = fct_relevel(`Classification - Target Members`, "Other", after = Inf)) %>%
   ggplot(aes(x = `Classification - Target Members`)) + 
   geom_bar() + 
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) + 
+  labs(x = "Target Members", y = "Count")
 ```
+
+\begin{center}
+Figure 4.1: Distribution of Target Member Categories
+\end{center}
 
 Among the 61 associations, more than 50 identified Educators and Professional Practitioners as their target members, accounting for approximately 82% of the sample. This was the most commonly identified target group. Other frequently mentioned target groups included Leaders / Senior Professionals and Students / Pre-Service / Early Career members.
 
 Approximately 20% of associations also identified Schools / Organisations / Services as target audiences.
 
-## Membership Categories
+## 4.2 Membership Categories
 
 ```{r}
 LLM_wave_eve_classified |>
@@ -855,8 +899,26 @@ LLM_wave_eve_classified |>
   mutate(`Classification - Member Categories` = fct_relevel(`Classification - Member Categories`, "Other", after = Inf)) %>%
   ggplot(aes(x = `Classification - Member Categories`)) + 
   geom_bar() + 
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) + 
+  labs(x = "Member Categories", y = "Count") + 
+  scale_x_discrete(
+  labels = c(
+    "Individual / Full membership" = "Full membership",
+    "Associate / Concession / Other reduced-status membership" = "Other reduced-status membership",
+    "School / Institutional / Organisation membership" = "Organisation membership",
+    "Corporate / Commercial membership" = "Commercial membership",
+    "Student / Pre-service membership" = "Pre-service membership",
+    "Retired / Life / Honorary membership" = "Honorary membership", 
+    "Role / Sector-specific membership" = "Sector-specific membership", 
+    "Early Career membership" = "Early Career membership", 
+    "Geographic / Regional membership" = "Regional membership"
+    )
+  ) 
 ```
+
+\begin{center}
+Figure 4.2: Distribution of Membership Categories
+\end{center}
 
 More than 40 associations offer not only Individual / Full Membership but also membership types for organisations, such as schools. Membership categories for Students and Pre-Service members were also common.
 
@@ -864,7 +926,7 @@ It is worth noting that many associations provide specific membership categories
 
 Overall, membership categories are mainly differentiated by the type of member, such as individuals or organisations, and by members' career stage.
 
-## Member Advertising and Recruitment Channels
+## 4.3 Member Advertising and Recruitment Channels
 
 ```{r}
 LLM_wave_eve_classified |>
@@ -872,8 +934,13 @@ LLM_wave_eve_classified |>
   mutate(`Classification - Member Advertising` = fct_relevel(`Classification - Member Advertising`, "Other", after = Inf)) %>%
   ggplot(aes(x = `Classification - Member Advertising`)) + 
   geom_bar() + 
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) + 
+  labs(x = "Member Advertising", y = "Count")
 ```
+
+\begin{center}
+Figure 4.3: Distribution of Member Advertising
+\end{center}
 
 For member recruitment, Email / Direct Mail / Newsletter and Social Media / Digital Platforms are the two most commonly used channels. Events / Professional Learning, Member / Professional Networks & Partnerships, and Website / Online Presence are also frequently used to attract members.
 
@@ -916,22 +983,36 @@ target_adv_count %>%
     x = `Classification - Member Advertising`,
     y = `Classification - Target Members`,
     fill = n
-  )
-) +
+    )
+  ) +
   geom_tile() +
-  geom_text(aes(label = label), size = 3) +
+  geom_text(aes(label = label), size = 2.5) +
   scale_fill_gradient(low = "white", high = "steelblue") +
   theme_minimal() +
+  labs(x = "Member Advertising",y = "Target Members",fill = "Count") + 
   theme(
-    axis.text.x = element_text(angle = 60, hjust = 1)
+    legend.position = "bottom",
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid = element_blank()
   ) +
-  labs(
-    title = "Advertising Approaches by Target Member Groups",
-    x = "Member Advertising",
-    y = "Target Members",
-    fill = "Count"
-  )
+  scale_x_discrete(
+  labels = c(
+    "Direct outreach / Institutional contacts" = "Direct outreach",
+    "Email / Direct mail / Newsletter" = "Email",
+    "Events / Professional learning" = "Events",
+    "Member / Professional networks & Partnerships" = "Networks",
+    "Program / Renewal-based recruitment" = "Recruitment",
+    "Social media / Digital platforms" = "Social media", 
+    "Website / Online presence" = "Website"
+    )
+  ) 
+
+  
 ```
+
+\begin{center}
+Figure 4.3: Advertising Approaches by Target Member Groups
+\end{center}
 
 For Professional Practitioners, Social Media (24.8%) and Email (22.2%) are the two most commonly used recruitment channels. Professional Networks & Partnerships (18.8%) and Professional Learning Events (17.9%) are also important channels, followed by Websites (10.3%). Only a small number of associations use Institutional Contacts (2.6%) or Renewal-based Recruitment (3.4%).
 
@@ -945,7 +1026,7 @@ For schools and other organisational target groups, Email (30.8%) and Social Med
 
 Overall, there are some common patterns in recruitment channels across different target groups. Most associations rely on Email and Social Media as core channels, supported by professional networks and event promotion. Although Websites appear to be more important for organisational target groups, there is currently limited evidence of highly differentiated recruitment strategies for different audiences.
 
-# Association–Educators SA Relationship
+# 5 Association–Educators SA Relationship
 
 ```{r, eval=FALSE}
 # LLM
@@ -960,7 +1041,7 @@ write.csv(LLM_wave_rest, "data/LLM_wave_rest.csv")
 LLM_wave_rest_classified <- read_csv("data/LLM_wave_rest_classified.csv")
 ```
 
-## Advocacy Issues and Organisational Threats
+## 5.1 Advocacy Issues and Organisational Threats
 
 ```{r, eval=FALSE}
 # LLM
@@ -1000,8 +1081,12 @@ compare_threat %>%
   geom_col(position = "dodge") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
-  labs(y = "Count",title = "Advocacy Issue vs Threats Category")
+  labs(y = "Count")
 ```
+
+\begin{center}
+Figure 5.1: Advocacy Issue vs Threats Category
+\end{center}
 
 For Advocacy Issues, Subject / Program Sustainability & Quality was the most frequently mentioned category, with 12 mentions. This was followed by Access, Equity & Inclusion (9 mentions), Education Policy, Curriculum & Standards (9 mentions), and Workforce & Staffing (8 mentions).
 
@@ -1019,7 +1104,7 @@ Workforce & Staffing is important in both areas. It appeared eight times in Advo
 
 Overall, associations' advocacy efforts mainly focus on education quality, equity, and policy issues, while their organisational concerns are more focused on member engagement, staffing, and organisational capacity.
 
-## What Associations Can Contribute and What They Expect from Educators SA
+## 5.2 What Associations Can Contribute and What They Expect from Educators SA
 
 ```{r}
 compare_contribute <- bind_rows(
@@ -1042,8 +1127,12 @@ compare_contribute %>%
   geom_col(position = "dodge") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
-  labs(y = "Count",title = "What Associations Contribute vs What They Expect from Educators SA")
+  labs(y = "Count")
 ```
+
+\begin{center}
+Figure 5.2: What Associations Contribute vs What They Expect from Educators SA
+\end{center}
 
 For Association Can Contribute, Specialist Expertise & Perspectives was the most frequently identified category, with 18 mentions. This was followed by Advocacy & Collective Voice (16 mentions), Organisational Support & Capacity (16 mentions), and Networking & Support & Collaboration (14 mentions).
 
@@ -1061,11 +1150,11 @@ Advocacy & Collective Voice and Organisational Support & Capacity are mentioned 
 
 Overall, associations tend to describe their own role in terms of professional expertise and advocacy, while their expectations of Educators SA are more focused on ongoing networking, collaboration, information, and organisational support. There is relatively strong alignment in advocacy and organisational support, while networking and collaboration show a larger difference between current contribution and expected support.
 
-# Recommendations
+# 6 Recommendations
 
-## Survey Design
+## 6.1 Survey Design
 
-### Improve the Collection of Membership Structure Data
+### 6.1.1 Improve the Collection of Membership Structure Data
 
 Different types of members should be recorded separately to provide a clearer understanding of membership structure. For example, the survey could ask:
 
@@ -1075,7 +1164,7 @@ For national organisations, an additional question could ask what proportion of 
 
 Instead of asking associations to predict their future membership numbers, the survey could ask for the proportion of members whose membership expired in the previous year and who subsequently renewed. This would provide a more measurable indicator for understanding future membership trends.
 
-### Collect More Information About Geographic Activity
+### 6.1.2 Collect More Information About Geographic Activity
 
 A multiple-choice question could be added to identify the states or cities where associations are most active, for example:
 
@@ -1083,7 +1172,7 @@ A multiple-choice question could be added to identify the states or cities where
 
 Some associations did not provide specific location information, resulting in missing data in the current analysis. Collecting this information could provide a better understanding of the geographic distribution of association activities and could also support future collaboration and joint events between associations.
 
-### Simplify the Question About Member Age
+### 6.1.3 Simplify the Question About Member Age
 
 The question about member age distribution has a very high level of missing data. This suggests that many associations may not have detailed information about the age structure of their members.
 
@@ -1093,19 +1182,19 @@ Rather than asking for detailed age distribution, the question could be simplifi
 
 A broader question would reduce the reporting burden while still providing useful information about the general age structure of association membership.
 
-### Remove Duplicate Survey Questions
+### 6.1.4 Remove Duplicate Survey Questions
 
 The questions “Do you offer any discounted memberships to Early Career Educators?” and “Do you offer a discounted membership to ‘Early Careers’ or ‘Pre-Service’?” are similar and may collect overlapping information.
 
 The first question could therefore be removed to reduce duplication in the survey.
 
-### Collect Information About Areas of Collaboration
+### 6.1.5 Collect Information About Areas of Collaboration
 
 Given the strong demand for collaboration between associations, the survey could ask associations which areas they would be interested in collaborating on, such as Mathematics, Arts, English, or Science.
 
 This information could help Educators SA identify associations with similar interests and organise joint activities or events across multiple associations.
 
-## Data Collection
+## 6.2 Data Collection
 
 Where possible, the format of survey responses should be more structured. For example, questions asking for membership numbers could be set to accept numerical values only. Some open-ended questions could also be changed into predefined single-choice or multiple-choice questions.
 
