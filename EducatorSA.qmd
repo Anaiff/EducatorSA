@@ -26,6 +26,16 @@ wave <- read_excel("D:/Desktop/EducatorSA/WAVE_Educators SA_members_8_5_2026.xls
 gateway <- read_excel("D:/Desktop/EducatorSA/Gateway_exports_association_users_export.xlsx")
 ```
 
+# Introduction
+
+Educators SA (EdSA）是南澳大利亚州教育工作者的专业学习与支持机构，是education professional associations的总会，network and support a community of educators statewide。EdSA致力于为教育者和协会发声，是南澳最大的教育专业学习活动提供方之一，同时也举办大型教育庆典活动。在EdSA的发展方向中，帮助会员协会提升治理、营销和管理能力、加强与会员的关系，以及通过数据支持有依据的决策与倡导，都是重要的组成部分。因此，清楚了解这些会员协会本身是什么样的组织，是EdSA开展各项工作的基础。
+
+本报告所用的数据来自EdSA的内部会员信息，包括2025年迁移至新平台WAVE后的会员数据，以及旧平台Gateway的会员数据。这些信息由各会员协会在注册成为会员时按要求填写，内容涵盖会员规模、服务对象、会员类别、活动与服务、对外宣传渠道，以及协会对EdSA的期望等方面。需要说明的是，这些数据属于协会自行填报的信息，反映的是当前数据所覆盖的会员协会的情况，部分问题存在缺失或回答不确定的情况（例如会员人数、年龄分布等)，因此分析结果应被理解为对现有信息的描述，而不是对所有协会情况的完整或精确刻画，也不用于判断因果关系。
+
+本报告的主要读者是EdSA团队。通过对这些数据的整理与分析，我们希望帮助团队更清楚地了解会员协会的整体面貌，看到不同协会在会员规模、服务对象、活动和服务方面的特点，并了解协会在倡导议题、面临的挑战以及对EdSA的期望上有哪些共同点和差异。这些发现可以帮助EdSA注意到值得进一步关注的模式、需求以及未来可能开展互动与合作的方向，为今后的讨论、规划和决策提供有数据支持的参考。
+
+具体来说，本报告围绕四个较宽泛的问题展开:第一，当前会员协会的规模和会员构成是怎样的，会员数量在2024年与2025年之间有何变化，各协会主要面向哪些人群、设有哪些会员类别，包括对Early Career和Pre-Service的会员优惠与服务;第二，协会开展哪些类型的专业学习活动，这些活动的类型、地点、多样性和频率有什么特点;第三，协会通过哪些渠道进行会员招募和宣传，面向不同对象时做法是否有所不同;第四，协会重点关注哪些倡导议题、面临哪些挑战，以及它们能为EdSA提供什么、又希望从EdSA获得什么。此外，由于数据在分析过程中暴露出一些缺失和不一致的问题，本报告也会对问卷设计和数据收集方式提出改进建议，使今后的信息更完整、更易于回答，也更便于跟踪变化。
+
 # 1. Data Cleaning and Preparation
 
 Before the main analysis, the WAVE and Gateway membership survey data were systematically cleaned and prepared to improve data quality and ensure the reliability of the subsequent analysis. After data cleaning, 67 Gateway records and 61 WAVE records were retained for further analysis. In addition, a combined dataset containing 59 common members was created to compare selected variables between the old and new platforms.
@@ -188,6 +198,7 @@ wave |>
   vis_miss() + 
   theme(axis.text.x = element_text(vjust = 0.2))
 ```
+
 \begin{center}
 Figure1.3.1 The missing data situation for membership numbers in 2024–2025
 \end{center}
@@ -228,8 +239,6 @@ Figure1.3.3 The missing data situation for the age distribution on the WAVE plat
 \end{center}
 
 These two figures show the missing data situation for the Gateway and WAVE platforms respectively. For member age distribution, more than approximately 80% of associations on both the Gateway and WAVE platforms did not provide information about the age distribution of their members. This suggests that many associations may not have detailed information about the age structure of their membership. Due to the limited amount of valid data, age distribution was excluded from the analysis.
-
-
 
 ```{r}
 wave <- wave |>
@@ -472,6 +481,19 @@ median(wave$number_members_2025, na.rm = TRUE)
 
 The average membership size was approximately 135 in 2024, with a median of 77. In 2025, the average increased to approximately 321, while the median increased to 85. Compared with 2024, the average membership size more than doubled, while the median increased from 77 to 85. The increase in average membership size was largely driven by a small number of very large associations, while the median membership size increased only modestly.
 
+```{r, eval=FALSE}
+wave_trend <- wave |>
+  select(`Was that an increase, decrease or stable number?`)
+
+write.csv(wave_trend, "data/wave_trend.csv", row.names = FALSE)
+```
+
+![Association Membership Movement](Association Membership Movement.png){width=80%}
+
+\begin{center}
+Figure 2.2.1: Association Membership Movement
+\end{center}
+
 ```{r}
 wave_filled |>
   ggplot(aes(x = number_members_2024, y = number_members_2025)) + 
@@ -482,21 +504,18 @@ wave_filled |>
 ```
 
 \begin{center}
-Figure 2.2: Association Membership Size in 2024 and 2025
+Figure 2.2.2: Association Membership Size in 2024 and 2025
 \end{center}
 
-Figure 2.2 shows the distribution of association membership sizes in 2024 and 2025. The dashed line represents the reference line where the membership size was the same in both years. The distribution is highly skewed, with a small number of very large associations and a large number of smaller associations.
+Figure 2.2.2 shows the distribution of association membership sizes in 2024 and 2025. The dashed line represents the reference line where the membership size was the same in both years. The distribution is highly skewed, with a small number of very large associations and a large number of smaller associations.
 
-Several associations show notable changes in membership size. The Primary English Teaching Association
-Australia (PETAA) had 5,200 members in 2025, considerably more than any other association and accounting for approximately 28% of the estimated total membership. lowever, PETAA reported only 200 members in 2024, representing a substantial increase within one year.
-This large increase was confirmed to be related to a partnership with government departments, through which a large number of people were automatically registered as members.
+Several associations show notable changes in membership size. The Primary English Teaching Association Australia (PETAA) had 5,200 members in 2025, considerably more than any other association and accounting for approximately 28% of the estimated total membership. lowever, PETAA reported only 200 members in 2024, representing a substantial increase within one year. This large increase was confirmed to be related to a partnership with government departments, through which a large number of people were automatically registered as members.
 
-The Design and Technology Teachers
-Association of SA (DATTA SA) also experienced a substantial increase in membership, from 77 members in 2024 to 700 in 2025. The Australian Council for Educational Leaders (ACEL) had approximately 4,000 members in 2025, accounting for around 21% of the estimated total membership. However, the 2024 membership figure for ACEL was an imputed value and therefore should not be used for comparison. The South Australian Science Teachers Association (SASTA) had more than 1,700 members in 2025, making it the third-largest association by membership size. 
+The Design and Technology Teachers Association of SA (DATTA SA) also experienced a substantial increase in membership, from 77 members in 2024 to 700 in 2025. The Australian Council for Educational Leaders (ACEL) had approximately 4,000 members in 2025, accounting for around 21% of the estimated total membership. However, the 2024 membership figure for ACEL was an imputed value and therefore should not be used for comparison. The South Australian Science Teachers Association (SASTA) had more than 1,700 members in 2025, making it the third-largest association by membership size.
 
 SASTA and the Health and Education Institute of Australia (SA) (HEIA (SA)) showed relatively stable membership numbers, with small increases between the two years.
 
-Overall, most associations are relatively evenly distributed on both sides of the reference line, indicating that membership sizes varied between 2024 and 2025, with both increases and decreases observed. 
+Overall, most associations are relatively evenly distributed on both sides of the reference line, indicating that membership sizes varied between 2024 and 2025, with both increases and decreases observed.
 
 For the question "Was that an increase, decrease or stable number?", 39 associations reported stable membership numbers, while 12 reported an increase and 10 reported a decrease. Stable membership was the most common response, accounting for approximately 64% of associations. This further supports the finding above that membership sizes were relatively stable for most associations, despite some notable changes among individual associations.
 
